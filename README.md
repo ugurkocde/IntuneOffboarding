@@ -25,7 +25,7 @@ Instructions
 1. Clone this repository or download the script.
 2. Open PowerShell.
 3. Navigate to the directory containing the script.
-4. Run the script by typing .\scriptname.ps1.
+4. Run the script by typing .\Get-IntuneOffboardingTool.ps1 .
 
 ## Using the Tool
 
