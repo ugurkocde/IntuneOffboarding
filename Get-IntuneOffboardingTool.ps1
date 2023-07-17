@@ -47,16 +47,16 @@ $InstallModulesButton = $Window.FindName("InstallModulesButton")
 
 $Window.Add_Loaded({
         try {
-            # Try to get context silently
+
             $context = Get-MgContext
 
             if ($null -eq $context) {
-                # If we cannot get a context, there is no existing connection
+
                 $AuthenticateButton.Content = "Connect to MS Graph"
                 $AuthenticateButton.IsEnabled = $true
             }
             else {
-                # If we can get a context, there is an existing connection
+
                 $AuthenticateButton.Content = "Successfully connected"
                 $AuthenticateButton.IsEnabled = $false
             }
@@ -90,8 +90,6 @@ $Window.Add_Loaded({
     })
     
 
-
-# Add the logic for the Install Modules button
 $InstallModulesButton.Add_Click({
         try {
             # Define the modules to be installed
@@ -160,7 +158,6 @@ $SearchButton.Add_Click({
                 $Window.FindName('serialnumber').Text = $IntuneDevice.SerialNumber
                 $Window.FindName('devicename').Text = $IntuneDevice.DeviceName
                 $Window.FindName('os').Text = $IntuneDevice.OperatingSystem
-                # Assuming that User property is available in the $IntuneDevice object
                 $Window.FindName('user').Text = $IntuneDevice.UserDisplayName
             }
         }
