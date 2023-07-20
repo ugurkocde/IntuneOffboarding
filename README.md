@@ -21,6 +21,10 @@ https://github.com/ugurkocde/IntuneOffboarding/assets/43906965/8fdc12ea-cc6c-4bd
 - Microsoft.Graph.DeviceManagement
 - Microsoft.Graph.DeviceManagement.Enrollment
 
+- Permissions:
+- DeviceManagementManagedDevices.ReadWrite.All, 
+- DeviceManagementServiceConfig.ReadWrite.All
+
 These modules will be installed automatically if not present, but you need to have administrative permissions.
 Instructions
 
