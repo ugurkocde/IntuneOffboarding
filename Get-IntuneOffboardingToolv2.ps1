@@ -16,8 +16,8 @@ Add-Type -AssemblyName System.Windows.Forms
             <RowDefinition Height="212*"/>
         </Grid.RowDefinitions>
         <Button x:Name="SearchButton" Content="Search" HorizontalAlignment="Left" Margin="393,100,0,0" VerticalAlignment="Top" Width="92" Grid.Row="1" Height="22"/>
-        <Button x:Name="AuthenticateButton" Content="Connect to MS Graph" HorizontalAlignment="Left" Margin="76,42,0,0" VerticalAlignment="Top" Width="212" Grid.Row="1"/>
-        <Button x:Name="InstallModulesButton" Content="Install/Update Modules" HorizontalAlignment="Left" Margin="293,42,0,0" VerticalAlignment="Top" Width="184" Height="20" Grid.Row="1"/>
+        <Button x:Name="AuthenticateButton" Content="Connect to MS Graph" HorizontalAlignment="Left" Margin="76,42,0,0" VerticalAlignment="Top" Width="131" Grid.Row="1"/>
+        <Button x:Name="InstallModulesButton" Content="Install/Update Modules" HorizontalAlignment="Left" Margin="318,42,0,0" VerticalAlignment="Top" Width="167" Height="20" Grid.Row="1"/>
         <TextBox x:Name="SearchInputText" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"  HorizontalAlignment="Left" Margin="176,73,0,0" VerticalAlignment="Top" Width="213" Height="22" Grid.Row="1" FontSize="12"/>
         <Button x:Name="OffboardButton" Content="Offboard device(s) from Intune, AutoPilot and Azure AD" HorizontalAlignment="Left" Margin="78,333,0,0" VerticalAlignment="Top" Width="308" Grid.Row="1"/>
         <Label Content="Intune Offboarding Tool" HorizontalAlignment="Left" VerticalAlignment="Top" Height="49" Width="264" FontSize="24" Grid.Row="1" Margin="160,0,0,0"/>
@@ -32,7 +32,8 @@ Add-Type -AssemblyName System.Windows.Forms
         <ComboBox x:Name="dropdown_lastsync_days" HorizontalAlignment="Left" Margin="79,367,0,0" Grid.Row="1" VerticalAlignment="Top" Width="94"/>
         <Button x:Name="export_stale_devices_button" Content="Export Stale devices" HorizontalAlignment="Left" Margin="195,367,0,0" VerticalAlignment="Top" Width="118" Grid.Row="1" Height="23"/>
         <ComboBox x:Name="dropdown_lastsync_platform" HorizontalAlignment="Left" Margin="79,396,0,0" Grid.Row="1" VerticalAlignment="Top" Width="94"/>
-        <Button x:Name="disconnect_button" Content="Disconnect from MS Graph" HorizontalAlignment="Left" Margin="352,422,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+        <Button x:Name="disconnect_button" Content="Disconnect" Width="80" HorizontalAlignment="Left" Margin="419,422,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+        <Button x:Name="check_permissions_button" Content="Check Permissions" HorizontalAlignment="Left" Margin="212,42,0,0" Grid.Row="1" VerticalAlignment="Top" />
     </Grid>
 
 
@@ -68,6 +69,10 @@ $Dropdown = $Window.FindName("dropdown")
 $Disconnect = $Window.FindName('disconnect_button')
 $Export_Button = $Window.FindName('export_button')
 $logs_button = $Window.FindName('logs_button')
+$CheckPermissionsButton = $Window.FindName('check_permissions_button')
+
+
+
 
 $Dropdown_LastSync_Platform = $Window.FindName('dropdown_lastsync_platform')
 $Dropdown_LastSync_Days = $Window.FindName('dropdown_lastsync_days')
@@ -140,16 +145,85 @@ $Window.Add_Loaded({
 $Disconnect.Add_Click({
         try {
             Write-Log "Attempting to disconnect from MS Graph..."
-            $Disconnect.Content = "Disconnect from MS Graph"
-            $Disconnect.IsEnabled = $true
+            Disconnect-MgGraph
+            $Disconnect.Content = "Disconnected"
+            $Disconnect.IsEnabled = $false  # Disable Disconnect button after disconnect
             $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
+            $CheckPermissionsButton.IsEnabled = $false  # Disable CheckPermissionsButton after disconnect
         }
         catch {
             Write-Log "Error occurred while attempting to disconnect from MS Graph: $_"
             [System.Windows.MessageBox]::Show("Error in disconnect operation.")
         }
     })
+    
+$AuthenticateButton.Add_Click({
+        try {
+            Connect-MgGraph -Scopes "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
+            $context = Get-MgContext
+        
+            if ($null -eq $context) {
+                Write-Log "Authentication Failed"
+                $AuthenticateButton.Content = "Authentication Failed"
+                $AuthenticateButton.IsEnabled = $true
+                $Disconnect.Content = "Disconnected"  
+                $Disconnect.IsEnabled = $false  
+                $CheckPermissionsButton.IsEnabled = $false  
+            }
+            else {
+                Write-Log "Authentication Successful"
+                $AuthenticateButton.Content = "Authentication Successful"
+                $AuthenticateButton.IsEnabled = $false
+                $Disconnect.Content = "Disconnect"  
+                $Disconnect.IsEnabled = $true  
+                $CheckPermissionsButton.IsEnabled = $true  
+            }
+        }
+        catch {
+            Write-Log "Error occurred during authentication. Exception: $_"
+            $AuthenticateButton.Content = "Authentication Failed"
+            $AuthenticateButton.IsEnabled = $true
+            $Disconnect.Content = "Disconnected"  
+            $Disconnect.IsEnabled = $false  
+            $CheckPermissionsButton.IsEnabled = $false  
+        }
+    })
+    
+    
+$CheckPermissionsButton.Add_Click({
+        try {
+            Write-Log "Check Permissions button clicked, attempting to retrieve user context..."
+
+            $context = Get-MGContext
+
+            if ($context) {
+                $username = $context.Account
+
+                # Check if the required scopes are present
+                $requiredScopes = @("DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
+                $missingScopes = $requiredScopes | Where-Object { $_ -notin $context.Scopes }
+
+                if ($missingScopes) {
+                    $missingScopesList = $missingScopes -join ', '
+                    $message = "WARNING: The following required permissions are missing for $username : $missingScopesList"
+                }
+                else {
+                    $message = "All required permissions are granted for $username."
+                }
+
+                [System.Windows.MessageBox]::Show($message)
+            }
+            else {
+                [System.Windows.MessageBox]::Show("No user context found. Please authenticate first.")
+            }
+        }
+        catch {
+            Write-Log "Error in retrieving user context: $_"
+            [System.Windows.MessageBox]::Show("Error in retrieving user context.")
+        }
+    })
+
     
 $Export_Button.Add_Click({
         try {
@@ -244,12 +318,15 @@ $Window.Add_Loaded({
 $InstallModulesButton.Add_Click({
         try {
             Write-Log "Install Modules button clicked, attempting to install modules..."
-        
+    
             $modules = @(
                 "Microsoft.Graph.Identity.DirectoryManagement",
                 "Microsoft.Graph.DeviceManagement",
                 "Microsoft.Graph.DeviceManagement.Enrollment"
             )
+    
+            $InstallModulesButton.Content = "Installing..."
+            $InstallModulesButton.IsEnabled = $false
     
             $job = Start-Job -ScriptBlock {
                 param($modules)
@@ -266,12 +343,17 @@ $InstallModulesButton.Add_Click({
             Register-ObjectEvent -InputObject $job -EventName StateChanged -Action {
                 if ($event.SourceEventArgs.JobStateInfo.State -eq 'Completed') {
                     if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
-                        $InstallModulesButton.Content = "Modules Installed"
-                        $InstallModulesButton.IsEnabled = $false
+                        $InstallModulesButton.Dispatcher.Invoke({
+                                $InstallModulesButton.Content = "Modules Installed"
+                            })
                         Write-Log "All modules installed successfully."
                     }
                 }
                 elseif ($event.SourceEventArgs.JobStateInfo.State -eq 'Failed') {
+                    $InstallModulesButton.Dispatcher.Invoke({
+                            $InstallModulesButton.Content = "Install Modules"
+                            $InstallModulesButton.IsEnabled = $true
+                        })
                     Write-Log "Error in installing modules. Please ensure you have administrative permissions: $_"
                     [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
                 }
@@ -282,29 +364,7 @@ $InstallModulesButton.Add_Click({
             [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
         }
     })
-        
-$AuthenticateButton.Add_Click({
-        try {
-            Connect-MgGraph -Scopes "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
-            $context = Get-MgContext
-        
-            if ($null -eq $context) {
-                Write-Log "Authentication Failed"
-                $AuthenticateButton.Content = "Authentication Failed"
-                $AuthenticateButton.IsEnabled = $true
-            }
-            else {
-                Write-Log "Authentication Successful"
-                $AuthenticateButton.Content = "Authentication Successful"
-                $AuthenticateButton.IsEnabled = $false
-            }
-        }
-        catch {
-            Write-Log "Error occurred during authentication. Exception: $_"
-            $AuthenticateButton.Content = "Authentication Failed"
-            $AuthenticateButton.IsEnabled = $true
-        }
-    })
+    
 
 $SearchButton.Add_Click({
 
