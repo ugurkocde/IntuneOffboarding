@@ -35,6 +35,7 @@ Add-Type -AssemblyName System.Windows.Forms
         <Button x:Name="disconnect_button" Content="Disconnect from MS Graph" HorizontalAlignment="Left" Margin="352,422,0,0" VerticalAlignment="Top" Grid.Row="1"/>
     </Grid>
 
+
     </Window>
 "@
 
@@ -139,8 +140,10 @@ $Window.Add_Loaded({
 $Disconnect.Add_Click({
         try {
             Write-Log "Attempting to disconnect from MS Graph..."
-            $Disconnect.Content = "Disconnect MS Graph"
+            $Disconnect.Content = "Disconnect from MS Graph"
             $Disconnect.IsEnabled = $true
+            $AuthenticateButton.Content = "Connect to MS Graph"
+            $AuthenticateButton.IsEnabled = $true
         }
         catch {
             Write-Log "Error occurred while attempting to disconnect from MS Graph: $_"
@@ -241,38 +244,50 @@ $Window.Add_Loaded({
 $InstallModulesButton.Add_Click({
         try {
             Write-Log "Install Modules button clicked, attempting to install modules..."
-
+        
             $modules = @(
                 "Microsoft.Graph.Identity.DirectoryManagement",
                 "Microsoft.Graph.DeviceManagement",
                 "Microsoft.Graph.DeviceManagement.Enrollment"
             )
     
-            foreach ($module in $modules) {
-                if (!(Get-Module -ListAvailable -Name $module)) {
-                    Write-Log "Installing module: $module..."
-                    Install-Module $module –Scope CurrentUser –Force –ErrorAction Stop
-                }
-            }
+            $job = Start-Job -ScriptBlock {
+                param($modules)
     
-
-            if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
-                $InstallModulesButton.Content = "Modules Installed"
-                $InstallModulesButton.IsEnabled = $false
-                Write-Log "All modules installed successfully."
+                foreach ($module in $modules) {
+                    if (!(Get-Module -ListAvailable -Name $module)) {
+                        Write-Host "Installing module: $module..."
+                        Install-Module $module -Scope CurrentUser -Force -ErrorAction Stop
+                    }
+                }
+            } -ArgumentList $modules
+    
+            # Register event to capture installation completion and update GUI accordingly
+            Register-ObjectEvent -InputObject $job -EventName StateChanged -Action {
+                if ($event.SourceEventArgs.JobStateInfo.State -eq 'Completed') {
+                    if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
+                        $InstallModulesButton.Content = "Modules Installed"
+                        $InstallModulesButton.IsEnabled = $false
+                        Write-Log "All modules installed successfully."
+                    }
+                }
+                elseif ($event.SourceEventArgs.JobStateInfo.State -eq 'Failed') {
+                    Write-Log "Error in installing modules. Please ensure you have administrative permissions: $_"
+                    [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
+                }
             }
         }
         catch {
-            Write-Log "Error in installing modules. Please ensure you have administrative permissions: $_"
+            Write-Log "Exception: $_"
             [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
         }
     })
-
+        
 $AuthenticateButton.Add_Click({
         try {
-            Connect-MgGraph –Scopes "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" –ErrorAction Stop
+            Connect-MgGraph -Scopes "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
             $context = Get-MgContext
-    
+        
             if ($null -eq $context) {
                 Write-Log "Authentication Failed"
                 $AuthenticateButton.Content = "Authentication Failed"
@@ -290,7 +305,6 @@ $AuthenticateButton.Add_Click({
             $AuthenticateButton.IsEnabled = $true
         }
     })
-
 
 $SearchButton.Add_Click({
 
@@ -474,18 +488,6 @@ $OffboardButton.Add_Click({
         }
     })
     
-$Window.FindName('disconnect_button').Add_Click({
-        try {
-            Disconnect-MgGraph
-            $Window.FindName('AuthenticateButton').IsEnabled = $true
-            $AuthenticateButton.Content = "Connect to MS Graph"
-            Write-Log "User disconnected from MS Graph."
-        }
-        catch {
-            Write-Log "Error in disconnect operation. Exception: $_"
-            [System.Windows.MessageBox]::Show("Error in disconnect operation.")
-        }
-    })
 
 $logs_button.Add_Click({
         $logFilePath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "IntuneOffboardingTool_Log.txt")
