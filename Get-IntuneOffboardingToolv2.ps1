@@ -437,16 +437,21 @@ $OffboardButton.Add_Click({
             return
         }
 
+        $confirmationResult = [System.Windows.MessageBox]::Show("Are you sure you want to proceed with offboarding? This action cannot be undone.", "Confirm Offboarding", [System.Windows.MessageBoxButton]::YesNo)
+        if ($confirmationResult -eq 'No') {
+            Write-Log "User canceled offboarding operation."
+            return
+        }
 
         try {
             $SearchTexts = $SearchInputText.Text -split ', '
-    
+
             foreach ($SearchText in $SearchTexts) {
                 if (![string]::IsNullOrEmpty($SearchText)) {
                     $AADDevice = Get-MgDevice -Search "displayName:$SearchText" -CountVariable CountVar -ConsistencyLevel eventual -ErrorAction Stop
                     $IntuneDevice = Get-MgDeviceManagementManagedDevice -Filter "deviceName eq '$SearchText'" -ErrorAction Stop
                     $AutopilotDevice = Get-MgDeviceManagementWindowsAutopilotDeviceIdentity -Filter "contains(serialNumber,'$($IntuneDevice.SerialNumber)')" -ErrorAction Stop
-    
+
                     if ($AADDevice) {
                         Remove-MgDevice -DeviceId $AADDevice.Id -ErrorAction Stop
                         [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from AzureAD.")
@@ -456,7 +461,7 @@ $OffboardButton.Add_Click({
                     else {
                         [System.Windows.MessageBox]::Show("Device $SearchText not found in AzureAD.")
                     }
-    
+
                     if ($IntuneDevice) {
                         Remove-MgDeviceManagementManagedDevice -ManagedDeviceId $IntuneDevice.Id -PassThru -ErrorAction Stop
                         [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from Intune.")
@@ -466,7 +471,7 @@ $OffboardButton.Add_Click({
                     else {
                         [System.Windows.MessageBox]::Show("Device $SearchText not found in Intune.")
                     }
-    
+
                     if ($AutopilotDevice) {
                         Remove-MgDeviceManagementWindowsAutopilotDeviceIdentity -WindowsAutopilotDeviceIdentityId $AutopilotDevice.Id -PassThru -ErrorAction Stop
                         [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from Autopilot.")
