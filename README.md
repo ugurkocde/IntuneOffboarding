@@ -1,5 +1,9 @@
 # Intune Offboarding Tool
 
+This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
+
+---
+
 <div align="center">
     <a href="https://twitter.com/UgurKocDe" target="_blank">
     <img src="https://img.shields.io/badge/Follow on Twitter-black?style=for-the-badge&logo=x&logoColor=white" alt="Twitter Badge" style="width: 200px; height: 40px;" />
@@ -13,7 +17,7 @@
   </a>
 </div>
 
-This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
+---
 
 # Quickstart: 
 
