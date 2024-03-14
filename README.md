@@ -1,23 +1,37 @@
 # Intune Offboarding Tool
 
-This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
+<div align="center">
+    <a href="https://twitter.com/UgurKocDe" target="_blank">
+    <img src="https://img.shields.io/badge/Follow on Twitter-black?style=for-the-badge&logo=x&logoColor=white" alt="Twitter Badge" />
+  </a>
+  <a href="https://www.linkedin.com/in/ugurkocde/" target="_blank">
+    <img src="https://img.shields.io/badge/Connect on LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
+  </a>
+
+  <a href="https://www.buymeacoffee.com/ugurkocde"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ugurkocde&button_colour=FF5F5F&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" style="width: 150px; height: 40px;" />
+  </a>
+
+  
+  
+</div>
+
+
+</div>
 
 ---
 
 <div align="center">
-    <a href="https://twitter.com/UgurKocDe" target="_blank">
-    <img src="https://img.shields.io/badge/Follow on Twitter-black?style=for-the-badge&logo=x&logoColor=white" alt="Twitter Badge" style="width: 200px; height: 40px;" />
-  </a>
-  <a href="https://www.linkedin.com/in/ugurkocde/" target="_blank">
-    <img src="https://img.shields.io/badge/Connect on LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge" style="width: 200px; height: 40px;" />
-  </a>
 
-  <a href="https://www.buymeacoffee.com/ugurkocde">
-    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ugurkocde&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" style="width: 200px; height: 40px;" />
-  </a>
+Sign up for my newsletter to receive immediate notifications whenever I launch a new tool, script or update.  
+[Sign up to the Newsletter](https://newsletter.ugurkoc.de/)
+
 </div>
 
+
 ---
+
+This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
+
 
 # Quickstart: 
 
