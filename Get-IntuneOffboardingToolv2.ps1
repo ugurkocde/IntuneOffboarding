@@ -160,7 +160,7 @@ $Disconnect.Add_Click({
     
 $AuthenticateButton.Add_Click({
         try {
-            Connect-MgGraph -Scopes "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
+            Connect-MgGraph -Scopes "Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
             $context = Get-MgContext
         
             if ($null -eq $context) {
@@ -201,7 +201,7 @@ $CheckPermissionsButton.Add_Click({
                 $username = $context.Account
 
                 # Check if the required scopes are present
-                $requiredScopes = @("DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
+                $requiredScopes = @("Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
                 $missingScopes = $requiredScopes | Where-Object { $_ -notin $context.Scopes }
 
                 if ($missingScopes) {
