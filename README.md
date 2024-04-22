@@ -30,6 +30,14 @@ Sign up for my newsletter to receive immediate notifications whenever I launch a
 
 ---
 
+<div align="center">
+
+New Update (April 2024) and Website: [IntuneOffboarding.com](https://IntuneOffboarding.com)
+
+</div>
+
+---
+
 This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
 
 
