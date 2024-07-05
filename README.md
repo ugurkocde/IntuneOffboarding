@@ -22,17 +22,16 @@
 
 <div align="center">
 
-Sign up for my newsletter to receive immediate notifications whenever I launch a new tool, script or update.  
-[Sign up to the Newsletter](https://newsletter.ugurkoc.de/)
+New Update and Website: [IntuneOffboarding.com](https://IntuneOffboarding.com)
 
 </div>
-
 
 ---
 
 <div align="center">
 
-New Update (April 2024) and Website: [IntuneOffboarding.com](https://IntuneOffboarding.com)
+Sign up for my newsletter to receive immediate notifications whenever I launch a new tool, script or update.  
+[Sign up to the Newsletter](https://newsletter.ugurkoc.de/)
 
 </div>
 
