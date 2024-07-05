@@ -201,7 +201,7 @@ $CheckPermissionsButton.Add_Click({
                 $username = $context.Account
 
                 # Check if the required scopes are present
-                $requiredScopes = @("Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
+                $requiredScopes = @("Device.Read.All", "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
                 $missingScopes = $requiredScopes | Where-Object { $_ -notin $context.Scopes }
 
                 if ($missingScopes) {
