@@ -2,7 +2,8 @@ Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
 
 # Add the DeviceObject class definition
-Add-Type -TypeDefinition @"
+if (-not ([System.Management.Automation.PSTypeName]'DeviceObject').Type) {
+    Add-Type -TypeDefinition @"
     using System;
     using System.ComponentModel;
 
@@ -35,6 +36,7 @@ Add-Type -TypeDefinition @"
         }
     }
 "@
+}
 
 # Define a helper function for paginated Graph API calls
 function Get-GraphPagedResults {
@@ -273,6 +275,10 @@ function Get-GraphPagedResults {
                             Content="Install/Update Modules"
                             Style="{StaticResource SidebarButtonStyle}"
                             Margin="15,5"/>
+                    <Button x:Name="logs_button" 
+                            Content="Logs"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5"/>
                     <Button x:Name="disconnect_button" 
                             Content="Disconnect"
                             Style="{StaticResource SidebarButtonStyle}"
@@ -304,147 +310,196 @@ function Get-GraphPagedResults {
             <Grid x:Name="DashboardPage">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
 
                 <!-- Header -->
-                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                <TextBlock Grid.Row="0"
                           Text="Dashboard" 
                           FontSize="24"
                           FontWeight="SemiBold"
                           Margin="0,0,0,20"/>
 
-                <!-- Device Statistics Card -->
-                <Border Grid.Row="1" Grid.Column="0"
-                        Background="White"
-                        CornerRadius="8"
-                        Margin="0,0,10,10"
-                        Padding="20">
-                    <StackPanel>
-                        <TextBlock Text="Device Statistics"
-                                  FontSize="18"
-                                  FontWeight="SemiBold"
-                                  Margin="0,0,0,15"/>
-                        <Grid x:Name="DeviceStatsGrid">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Devices"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TotalDevicesCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Windows Devices"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="WindowsDevicesCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="macOS Devices"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MacOSDevicesCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Mobile Devices"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="MobileDevicesCount" Text="0"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
+                <!-- Top Row Statistics -->
+                <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,20">
+                    <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Number of Devices in Intune" 
+                                     Foreground="#8B95A5" 
+                                     FontSize="14"/>
+                            <TextBlock x:Name="IntuneDevicesCount"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Total Devices"
+                                     Foreground="#8B95A5"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- Compliance Status Card -->
-                <Border Grid.Row="1" Grid.Column="1"
-                        Background="White"
-                        CornerRadius="8"
-                        Margin="10,0,0,10"
-                        Padding="20">
-                    <StackPanel>
-                        <TextBlock Text="Compliance Status"
-                                  FontSize="18"
-                                  FontWeight="SemiBold"
-                                  Margin="0,0,0,15"/>
-                        <Grid x:Name="ComplianceStatsGrid">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Compliant"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="CompliantDevicesCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Non-Compliant"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="NonCompliantDevicesCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Unknown"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="UnknownComplianceCount" Text="0"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
+                    <Border Background="#2D3A4F" Margin="10,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Number of Devices in Autopilot"
+                                     Foreground="#8B95A5"
+                                     FontSize="14"/>
+                            <TextBlock x:Name="AutopilotDevicesCount"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Total Devices"
+                                     Foreground="#8B95A5"/>
+                        </StackPanel>
+                    </Border>
 
-                <!-- Recent Activity Card -->
-                <Border Grid.Row="2" Grid.Column="0"
-                        Background="White"
-                        CornerRadius="8"
-                        Margin="0,10,10,0"
-                        Padding="20">
-                    <StackPanel>
-                        <TextBlock Text="Recent Activity"
-                                  FontSize="18"
-                                  FontWeight="SemiBold"
-                                  Margin="0,0,0,15"/>
-                        <ListBox x:Name="RecentActivityList"
-                                Height="200"
-                                BorderThickness="0"/>
-                    </StackPanel>
-                </Border>
+                    <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Number of Devices in EntraID"
+                                     Foreground="#8B95A5"
+                                     FontSize="14"/>
+                            <TextBlock x:Name="EntraIDDevicesCount"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Total Devices"
+                                     Foreground="#8B95A5"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
 
-                <!-- Stale Devices Card -->
-                <Border Grid.Row="2" Grid.Column="1"
-                        Background="White"
-                        CornerRadius="8"
-                        Margin="10,10,0,0"
-                        Padding="20">
-                    <StackPanel>
-                        <TextBlock Text="Stale Devices (>30 days)"
-                                  FontSize="18"
-                                  FontWeight="SemiBold"
-                                  Margin="0,0,0,15"/>
-                        <Grid x:Name="StaleDevicesGrid">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Windows"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="StaleWindowsCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="macOS"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="StaleMacOSCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="iOS"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="StaleiOSCount" Text="0"/>
-                            
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Android"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="StaleAndroidCount" Text="0"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
+                <!-- Middle Row - Stale Devices -->
+                <UniformGrid Grid.Row="2" Rows="1" Margin="0,0,0,20">
+                    <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Stale Devices (30 days)"
+                                     Foreground="#8B95A5"
+                                     FontSize="14"/>
+                            <TextBlock x:Name="StaleDevices30Count"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Did not Sync with Intune in the last 30 days"
+                                     Foreground="#8B95A5"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#2D3A4F" Margin="10,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Stale Devices (90 days)"
+                                     Foreground="#8B95A5"
+                                     FontSize="14"/>
+                            <TextBlock x:Name="StaleDevices90Count"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Did not Sync with Intune in the last 90 days"
+                                     Foreground="#8B95A5"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="Stale Devices (180 days)"
+                                     Foreground="#8B95A5"
+                                     FontSize="14"/>
+                            <TextBlock x:Name="StaleDevices180Count"
+                                     Text="0"
+                                     Foreground="White"
+                                     FontSize="32"
+                                     FontWeight="Bold"
+                                     Margin="0,10,0,5"/>
+                            <TextBlock Text="Did not Sync with Intune in the last 180 days"
+                                     Foreground="#8B95A5"
+                                     TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- Bottom Row - Personal/Corporate and Charts -->
+                <Grid Grid.Row="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Personal/Corporate Devices -->
+                    <UniformGrid Grid.Column="0" Rows="1" Margin="0,0,10,0">
+                        <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
+                            <StackPanel Margin="20">
+                                <TextBlock Text="Number of Personal Devices in Intune"
+                                         Foreground="#8B95A5"
+                                         FontSize="14"/>
+                                <TextBlock x:Name="PersonalDevicesCount"
+                                         Text="0"
+                                         Foreground="White"
+                                         FontSize="32"
+                                         FontWeight="Bold"
+                                         Margin="0,10,0,5"/>
+                                <TextBlock Text="Total personal devices"
+                                         Foreground="#8B95A5"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
+                            <StackPanel Margin="20">
+                                <TextBlock Text="Number of Corporate Devices in Intune"
+                                         Foreground="#8B95A5"
+                                         FontSize="14"/>
+                                <TextBlock x:Name="CorporateDevicesCount"
+                                         Text="0"
+                                         Foreground="White"
+                                         FontSize="32"
+                                         FontWeight="Bold"
+                                         Margin="0,10,0,5"/>
+                                <TextBlock Text="Total corporate devices"
+                                         Foreground="#8B95A5"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- Charts -->
+                    <Grid Grid.Column="1" Margin="10,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Platform Distribution Chart -->
+                        <Border Grid.Row="0" Background="#2D3A4F" CornerRadius="8" Margin="0,0,0,10">
+                            <StackPanel Margin="20">
+                                <TextBlock Text="Number of Devices per Platform (Intune)"
+                                         Foreground="#8B95A5"
+                                         FontSize="14"
+                                         Margin="0,0,0,10"/>
+                                <!-- Add chart here -->
+                            </StackPanel>
+                        </Border>
+
+                        <!-- OS Versions Chart -->
+                        <Border Grid.Row="1" Background="#2D3A4F" CornerRadius="8" Margin="0,10,0,0">
+                            <StackPanel Margin="20">
+                                <TextBlock Text="OS Versions (Intune)"
+                                         Foreground="#8B95A5"
+                                         FontSize="14"
+                                         Margin="0,0,0,10"/>
+                                <!-- Add chart here -->
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
             </Grid>
 
             <!-- Device Management Page -->
@@ -551,10 +606,6 @@ function Get-GraphPagedResults {
                 <Grid Grid.Row="5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Side -->
@@ -563,25 +614,6 @@ function Get-GraphPagedResults {
                             Background="#D83B01"
                             Grid.Column="0"
                             Margin="0,0,8,0"/>
-
-                    <!-- Center - Stale Devices -->
-                    <ComboBox x:Name="dropdown_lastsync_platform" 
-                              Width="120"
-                              Grid.Column="1"
-                              Margin="0,0,8,0"/>
-                    <ComboBox x:Name="dropdown_lastsync_days" 
-                              Width="120"
-                              Grid.Column="2"
-                              Margin="0,0,8,0"/>
-
-                    <!-- Right Side -->
-                    <Button x:Name="export_stale_devices_button" 
-                            Content="Export Stale Devices"
-                            Grid.Column="3"
-                            Margin="0,0,8,0"/>
-                    <Button x:Name="logs_button" 
-                            Content="Logs"
-                            Grid.Column="4"/>
                 </Grid>
             </Grid>
 
@@ -684,10 +716,6 @@ $Disconnect = $Window.FindName('disconnect_button')
 $logs_button = $Window.FindName('logs_button')
 $CheckPermissionsButton = $Window.FindName('CheckPermissionsButton')
 
-$Dropdown_LastSync_Platform = $Window.FindName('dropdown_lastsync_platform')
-$Dropdown_LastSync_Days = $Window.FindName('dropdown_lastsync_days')
-$Export_Stale_Devices = $Window.FindName('export_stale_devices_button')
-
 $SearchInputText.Add_GotFocus({
         # Empty - no resizing needed
     })
@@ -700,26 +728,6 @@ $Window.Add_Loaded({
         $Dropdown.Items.Add("Devicename")
         $Dropdown.Items.Add("Serialnumber")
         $Dropdown.SelectedIndex = 0
-
-        $Dropdown_LastSync_Platform.Items.Add("Windows")
-        $Dropdown_LastSync_Platform.Items.Add("Android")
-        $Dropdown_LastSync_Platform.Items.Add("iOS")
-        $Dropdown_LastSync_Platform.Items.Add("macOS")
-        $Dropdown_LastSync_Platform.SelectedIndex = 0
-
-        $Dropdown_LastSync_Days.Items.Add("30 days")
-        $Dropdown_LastSync_Days.Items.Add("60 days")
-        $Dropdown_LastSync_Days.Items.Add("90 days")
-        $Dropdown_LastSync_Days.Items.Add("120 days")
-        $Dropdown_LastSync_Days.Items.Add("150 days")
-        $Dropdown_LastSync_Days.Items.Add("180 days")
-        $Dropdown_LastSync_Days.Items.Add("210 days")
-        $Dropdown_LastSync_Days.Items.Add("240 days")
-        $Dropdown_LastSync_Days.Items.Add("270 days")
-        $Dropdown_LastSync_Days.Items.Add("300 days")
-        $Dropdown_LastSync_Days.Items.Add("330 days")
-        $Dropdown_LastSync_Days.Items.Add("365 days")
-        $Dropdown_LastSync_Days.SelectedIndex = 0    
     })
 
 $Window.Add_Loaded({
@@ -829,45 +837,6 @@ $CheckPermissionsButton.Add_Click({
         }
     })
 
-$Export_Stale_Devices.Add_Click({
-        try {
-            Write-Log "Export stale devices button clicked, attempting to export data..."
-            $daysRaw = $Window.FindName('dropdown_lastsync_days').SelectedItem
-            $OS = $Window.FindName('dropdown_lastsync_platform').SelectedItem
-    
-            $days = [int]($daysRaw -replace " days", "")
-    
-            if (![string]::IsNullOrEmpty($days) -and ![string]::IsNullOrEmpty($OS)) {
-                $pastDate = (Get-Date).AddDays(-$days).ToString('yyyy-MM-ddTHH:mm:ssZ')
-    
-                $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=lastSyncDateTime le $pastDate and operatingSystem eq '$OS'"
-                $StaleDevices = Invoke-MgGraphRequest -Uri $uri -Method GET
-    
-                if ($StaleDevices.value) {
-                    $deviceNames = $StaleDevices.value | ForEach-Object { $_.deviceName } | Out-String
-                
-                    $outputPath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "StaleDevices.txt")
-                    Set-Content -Path $outputPath -Value $deviceNames
-    
-                    Write-Log "Stale devices exported successfully to StaleDevices.txt on your Desktop."
-                    [System.Windows.MessageBox]::Show("Stale devices exported successfully to StaleDevices.txt on your Desktop.")
-                }
-                else {
-                    Write-Log "No stale devices found."
-                    [System.Windows.MessageBox]::Show("No stale devices found.")
-                }
-            }
-            else {
-                Write-Log "Number of days and platform not selected."
-                [System.Windows.MessageBox]::Show("Please select the number of days and platform.")
-            }
-        }
-        catch {
-            Write-Log "Error in export operation. Please ensure you have selected the correct number of days and platform: $_"
-            [System.Windows.MessageBox]::Show("Error in export operation. Please ensure you have selected the correct number of days and platform.")
-        }
-    })
-    
 $Window.Add_Loaded({
         try {
             Write-Log "Window is loading..."
@@ -1222,58 +1191,46 @@ $MenuPlaybooks.Add_Checked({
 
 function Update-DashboardStatistics {
     try {
-        # Get all managed devices with pagination
+        Write-Log "Updating dashboard statistics..."
+
+        # Get all managed devices
         $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices"
-        $devices = Get-GraphPagedResults -Uri $uri
+        $intuneDevices = Get-GraphPagedResults -Uri $uri
 
-        # Update device statistics
-        $totalDevices = $devices.Count
-        $windowsDevices = ($devices | Where-Object { $_.operatingSystem -eq 'Windows' }).Count
-        $macOSDevices = ($devices | Where-Object { $_.operatingSystem -eq 'macOS' }).Count
-        $mobileDevices = ($devices | Where-Object { $_.operatingSystem -in @('iOS', 'Android') }).Count
+        # Get all Autopilot devices
+        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities"
+        $autopilotDevices = Get-GraphPagedResults -Uri $uri
 
-        $Window.FindName('TotalDevicesCount').Text = $totalDevices
-        $Window.FindName('WindowsDevicesCount').Text = $windowsDevices
-        $Window.FindName('MacOSDevicesCount').Text = $macOSDevices
-        $Window.FindName('MobileDevicesCount').Text = $mobileDevices
+        # Get all EntraID devices
+        $uri = "https://graph.microsoft.com/v1.0/devices"
+        $entraDevices = Get-GraphPagedResults -Uri $uri
 
-        # Update compliance statistics
-        $compliantDevices = ($devices | Where-Object { $_.complianceState -eq 'compliant' }).Count
-        $nonCompliantDevices = ($devices | Where-Object { $_.complianceState -eq 'noncompliant' }).Count
-        $unknownCompliance = ($devices | Where-Object { $_.complianceState -eq 'unknown' }).Count
+        # Update top row counts
+        $Window.FindName('IntuneDevicesCount').Text = $intuneDevices.Count
+        $Window.FindName('AutopilotDevicesCount').Text = $autopilotDevices.Count
+        $Window.FindName('EntraIDDevicesCount').Text = $entraDevices.Count
 
-        $Window.FindName('CompliantDevicesCount').Text = $compliantDevices
-        $Window.FindName('NonCompliantDevicesCount').Text = $nonCompliantDevices
-        $Window.FindName('UnknownComplianceCount').Text = $unknownCompliance
-
-        # Update stale devices statistics (>30 days)
+        # Calculate stale devices
         $thirtyDaysAgo = (Get-Date).AddDays(-30).ToString('yyyy-MM-ddTHH:mm:ssZ')
-        
-        $staleWindows = ($devices | Where-Object { $_.operatingSystem -eq 'Windows' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
-        $staleMacOS = ($devices | Where-Object { $_.operatingSystem -eq 'macOS' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
-        $staleiOS = ($devices | Where-Object { $_.operatingSystem -eq 'iOS' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
-        $staleAndroid = ($devices | Where-Object { $_.operatingSystem -eq 'Android' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+        $ninetyDaysAgo = (Get-Date).AddDays(-90).ToString('yyyy-MM-ddTHH:mm:ssZ')
+        $oneEightyDaysAgo = (Get-Date).AddDays(-180).ToString('yyyy-MM-ddTHH:mm:ssZ')
 
-        $Window.FindName('StaleWindowsCount').Text = $staleWindows
-        $Window.FindName('StaleMacOSCount').Text = $staleMacOS
-        $Window.FindName('StaleiOSCount').Text = $staleiOS
-        $Window.FindName('StaleAndroidCount').Text = $staleAndroid
+        $stale30 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+        $stale90 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $ninetyDaysAgo }).Count
+        $stale180 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $oneEightyDaysAgo }).Count
 
-        # Update recent activity
-        $recentActivity = $devices | 
-        Sort-Object lastSyncDateTime -Descending | 
-        Select-Object -First 10 | 
-        ForEach-Object {
-            $activity = "Device: $($_.deviceName)"
-            $activity += " | Last Sync: $($_.lastSyncDateTime)"
-            $activity
-        }
+        $Window.FindName('StaleDevices30Count').Text = $stale30
+        $Window.FindName('StaleDevices90Count').Text = $stale90
+        $Window.FindName('StaleDevices180Count').Text = $stale180
 
-        $RecentActivityList = $Window.FindName('RecentActivityList')
-        $RecentActivityList.Items.Clear()
-        foreach ($activity in $recentActivity) {
-            $RecentActivityList.Items.Add($activity)
-        }
+        # Update personal/corporate counts
+        $personalDevices = ($intuneDevices | Where-Object { $_.managementState -eq 'userEnrollment' }).Count
+        $corporateDevices = ($intuneDevices | Where-Object { $_.managementState -eq 'managed' }).Count
+
+        $Window.FindName('PersonalDevicesCount').Text = $personalDevices
+        $Window.FindName('CorporateDevicesCount').Text = $corporateDevices
+
+        Write-Log "Dashboard statistics updated successfully."
     }
     catch {
         Write-Log "Error updating dashboard statistics: $_"
@@ -1331,6 +1288,55 @@ $SearchResultsDataGrid.Add_LoadingRow({
                         $OffboardButton.IsEnabled = ($null -ne $selectedDevices -and $selectedDevices.Count -gt 0)
                     }
                 })
+        }
+    })
+
+# Add dashboard refresh on authentication
+$AuthenticateButton.Add_Click({
+        try {
+            Connect-MgGraph -Scopes "Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
+            $context = Get-MgContext
+        
+            if ($null -eq $context) {
+                Write-Log "Authentication Failed"
+                $AuthenticateButton.Content = "Authentication Failed"
+                $AuthenticateButton.IsEnabled = $true
+                $Disconnect.Content = "Disconnected"  
+                $Disconnect.IsEnabled = $false  
+                $CheckPermissionsButton.IsEnabled = $false  
+            }
+            else {
+                Write-Log "Authentication Successful"
+                $AuthenticateButton.Content = "Authentication Successful"
+                $AuthenticateButton.IsEnabled = $false
+                $Disconnect.Content = "Disconnect"  
+                $Disconnect.IsEnabled = $true  
+                $CheckPermissionsButton.IsEnabled = $true
+                
+                # Update dashboard statistics after successful authentication
+                Update-DashboardStatistics
+            }
+        }
+        catch {
+            Write-Log "Error occurred during authentication. Exception: $_"
+            $AuthenticateButton.Content = "Authentication Failed"
+            $AuthenticateButton.IsEnabled = $true
+            $Disconnect.Content = "Disconnected"  
+            $Disconnect.IsEnabled = $false  
+            $CheckPermissionsButton.IsEnabled = $false  
+        }
+    })
+
+# Update dashboard when switching to Dashboard tab
+$MenuDashboard.Add_Checked({
+        $DashboardPage.Visibility = 'Visible'
+        $DeviceManagementPage.Visibility = 'Collapsed'
+        $PlaybooksPage.Visibility = 'Collapsed'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
+        
+        # Update dashboard statistics if connected
+        if (-not $AuthenticateButton.IsEnabled) {
+            Update-DashboardStatistics
         }
     })
 
