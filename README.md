@@ -1,48 +1,24 @@
 # Intune Offboarding Tool
 
 <div align="center">
-    <a href="https://twitter.com/UgurKocDe" target="_blank">
-    <img src="https://img.shields.io/badge/Follow on Twitter-black?style=for-the-badge&logo=x&logoColor=white" alt="Twitter Badge" />
-  </a>
-  <a href="https://www.linkedin.com/in/ugurkocde/" target="_blank">
-    <img src="https://img.shields.io/badge/Connect on LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/>
-  </a>
-
-  <a href="https://www.buymeacoffee.com/ugurkocde"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=ugurkocde&button_colour=FF5F5F&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" style="width: 150px; height: 40px;" />
-  </a>
-
-  
-  
-</div>
-
-
+  <p>
+    <a href="https://twitter.com/UgurKocDe">
+      <img src="https://img.shields.io/badge/Follow-@UgurKocDe-1DA1F2?style=flat&logo=x&logoColor=white" alt="Twitter Follow"/>
+    </a>
+    <a href="https://www.linkedin.com/in/ugurkocde/">
+      <img src="https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin" alt="LinkedIn"/>
+    </a>
+    <img src="https://img.shields.io/github/license/ugurkocde/IntuneAssignmentChecker?style=flat" alt="License"/>
+  </p>
 </div>
 
 ---
 
-<div align="center">
+This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Entra ID services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
 
-New Update and Website: [IntuneOffboarding.com](https://IntuneOffboarding.com)
+# Quickstart:
 
-</div>
-
----
-
-<div align="center">
-
-Sign up for my newsletter to receive immediate notifications whenever I launch a new tool, script or update.  
-[Sign up to the Newsletter](https://newsletter.ugurkoc.de/)
-
-</div>
-
----
-
-This PowerShell script provides a WPF GUI-based tool that facilitates the offboarding of devices from Microsoft's Intune, AutoPilot, and Azure AD services. The tool leverages Microsoft Graph APIs to authenticate, search, and remove devices.
-
-
-# Quickstart: 
-
-``Install-Script -Name Get-IntuneOffboardingTool``
+`Install-Script -Name Get-IntuneOffboardingTool`
 
 https://github.com/ugurkocde/IntuneOffboarding/assets/43906965/8fdc12ea-cc6c-4bd5-96f6-6956ca211317
 
@@ -51,7 +27,7 @@ https://github.com/ugurkocde/IntuneOffboarding/assets/43906965/8fdc12ea-cc6c-4bd
 - Connect to Microsoft Graph
 - Search for devices
 - Display device information
-- Offboard devices from Intune, AutoPilot, and Azure AD
+- Offboard devices from Intune, AutoPilot, and Entra ID
 
 ## Requirements
 
@@ -62,7 +38,7 @@ https://github.com/ugurkocde/IntuneOffboarding/assets/43906965/8fdc12ea-cc6c-4bd
 - Microsoft.Graph.DeviceManagement.Enrollment
 
 - Permissions:
-- DeviceManagementManagedDevices.ReadWrite.All, 
+- DeviceManagementManagedDevices.ReadWrite.All,
 - DeviceManagementServiceConfig.ReadWrite.All
 
 These modules will be installed automatically if not present, but you need to have administrative permissions.
@@ -78,12 +54,12 @@ Instructions
 1. Connect to Microsoft Graph: Click the "Connect to MS Graph" button to authenticate. The button will display "Successfully Connected" when the connection is established.
 2. Install Modules: Click the "Install Modules" button to install the necessary PowerShell modules for the script to run. The button will display "Modules Installed" when the modules are successfully installed.
 3. Search: Enter the device name in the provided text box and click the "Search" button. The device details will be displayed in the text blocks below, and the availability status of the device in Intune, Autopilot, and AzureAD will also be shown.
-4. Offboard: Click the "Offboard" button to remove the device from Intune, AutoPilot, and Azure AD. A success message will be displayed after each successful removal.
+4. Offboard: Click the "Offboard" button to remove the device from Intune, AutoPilot, and Entra ID. A success message will be displayed after each successful removal.
 
 ## Notes
 
 - Ensure you have administrative permissions to install necessary modules.
-- Ensure you have the necessary privileges in your Microsoft 365 subscription to offboard devices from Intune, AutoPilot, and Azure AD.
+- Ensure you have the necessary privileges in your Microsoft 365 subscription to offboard devices from Intune, AutoPilot, and Entra ID.
 
 ## Troubleshooting
 
@@ -99,8 +75,10 @@ If you face any issues while running the script, please check the following:
 This tool is provided as-is, with no warranties. Always test scripts and tools in a safe and recoverable environment before deploying them in production. Please ensure you have proper backups before performing any offboarding.
 Contributions
 
-## Contributions, issues, and feature requests are welcome. 
+## Contributions, issues, and feature requests are welcome.
+
 Feel free to check the issues page.
 
 ## License
+
 This project is MIT licensed.
