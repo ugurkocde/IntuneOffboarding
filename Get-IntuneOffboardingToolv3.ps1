@@ -36,6 +36,33 @@ Add-Type -TypeDefinition @"
     }
 "@
 
+# Define a helper function for paginated Graph API calls
+function Get-GraphPagedResults {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Uri
+    )
+    
+    $results = @()
+    $nextLink = $Uri
+    
+    do {
+        try {
+            $response = Invoke-MgGraphRequest -Uri $nextLink -Method GET
+            if ($response.value) {
+                $results += $response.value
+            }
+            $nextLink = $response.'@odata.nextLink'
+        }
+        catch {
+            Write-Log "Error in pagination: $_"
+            break
+        }
+    } while ($nextLink)
+    
+    return $results
+}
+
 # Define WPF XAML
 [xml]$xaml = @"
 <Window 
@@ -246,14 +273,22 @@ Add-Type -TypeDefinition @"
                             Content="Install/Update Modules"
                             Style="{StaticResource SidebarButtonStyle}"
                             Margin="15,5"/>
+                    <Button x:Name="disconnect_button" 
+                            Content="Disconnect"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5"/>
                 </StackPanel>
                 
                 <!-- Navigation Menu -->
                 <StackPanel Margin="0,10,0,0">
+                    <RadioButton x:Name="MenuDashboard"
+                                Content="Dashboard"
+                                Style="{StaticResource MenuButtonStyle}"
+                                IsChecked="True"
+                                GroupName="MenuGroup"/>
                     <RadioButton x:Name="MenuDeviceManagement"
                                 Content="Device Management"
                                 Style="{StaticResource MenuButtonStyle}"
-                                IsChecked="True"
                                 GroupName="MenuGroup"/>
                     <RadioButton x:Name="MenuPlaybooks"
                                 Content="Playbooks"
@@ -265,6 +300,153 @@ Add-Type -TypeDefinition @"
 
         <!-- Main Content Area -->
         <Grid x:Name="MainContent" Grid.Column="1" Margin="20">
+            <!-- Dashboard Page -->
+            <Grid x:Name="DashboardPage">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                          Text="Dashboard" 
+                          FontSize="24"
+                          FontWeight="SemiBold"
+                          Margin="0,0,0,20"/>
+
+                <!-- Device Statistics Card -->
+                <Border Grid.Row="1" Grid.Column="0"
+                        Background="White"
+                        CornerRadius="8"
+                        Margin="0,0,10,10"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Device Statistics"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Margin="0,0,0,15"/>
+                        <Grid x:Name="DeviceStatsGrid">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Devices"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TotalDevicesCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Windows Devices"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="WindowsDevicesCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="macOS Devices"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MacOSDevicesCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Mobile Devices"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="MobileDevicesCount" Text="0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Compliance Status Card -->
+                <Border Grid.Row="1" Grid.Column="1"
+                        Background="White"
+                        CornerRadius="8"
+                        Margin="10,0,0,10"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Compliance Status"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Margin="0,0,0,15"/>
+                        <Grid x:Name="ComplianceStatsGrid">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Compliant"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="CompliantDevicesCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Non-Compliant"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="NonCompliantDevicesCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Unknown"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="UnknownComplianceCount" Text="0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Activity Card -->
+                <Border Grid.Row="2" Grid.Column="0"
+                        Background="White"
+                        CornerRadius="8"
+                        Margin="0,10,10,0"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Recent Activity"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Margin="0,0,0,15"/>
+                        <ListBox x:Name="RecentActivityList"
+                                Height="200"
+                                BorderThickness="0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Stale Devices Card -->
+                <Border Grid.Row="2" Grid.Column="1"
+                        Background="White"
+                        CornerRadius="8"
+                        Margin="10,10,0,0"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Stale Devices (>30 days)"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  Margin="0,0,0,15"/>
+                        <Grid x:Name="StaleDevicesGrid">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Windows"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="StaleWindowsCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="macOS"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="StaleMacOSCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="iOS"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="StaleiOSCount" Text="0"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Android"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="StaleAndroidCount" Text="0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
             <!-- Device Management Page -->
             <Grid x:Name="DeviceManagementPage">
                 <Grid.RowDefinitions>
@@ -313,12 +495,13 @@ Add-Type -TypeDefinition @"
                           CanUserResizeRows="False"
                           CanUserReorderColumns="False"
                           SelectionMode="Extended"
-                          SelectionUnit="FullRow">
+                          SelectionUnit="FullRow"
+                          CanUserAddRows="False">
                     <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" 
-                                                  Header="Select" 
-                                                  Width="50"
-                                                  IsReadOnly="False"/>
+                        <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                                              Header="Select" 
+                                              Width="50"
+                                              IsReadOnly="False"/>
                         <DataGridTextColumn Binding="{Binding DeviceName}" 
                                                   Header="Device Name" 
                                                   Width="*"
@@ -372,7 +555,6 @@ Add-Type -TypeDefinition @"
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Side -->
@@ -397,13 +579,9 @@ Add-Type -TypeDefinition @"
                             Content="Export Stale Devices"
                             Grid.Column="3"
                             Margin="0,0,8,0"/>
-                    <Button x:Name="disconnect_button" 
-                            Content="Disconnect"
-                            Grid.Column="4"
-                            Margin="0,0,8,0"/>
                     <Button x:Name="logs_button" 
                             Content="Logs"
-                            Grid.Column="5"/>
+                            Grid.Column="4"/>
                 </Grid>
             </Grid>
 
@@ -770,85 +948,82 @@ $SearchButton.Add_Click({
         }
 
         try {
-            $SearchTexts = $SearchInputText.Text -split ', '
-            Write-Log "$SearchTexts"
+            $SearchTexts = $SearchInputText.Text -split ', ' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            Write-Log "Searching for devices: $SearchTexts"
             $searchOption = $Dropdown.SelectedItem
     
-            $searchResults = New-Object 'System.Collections.Generic.List[System.Object]'
+            $searchResults = New-Object 'System.Collections.Generic.List[DeviceObject]'
             $AADCount = 0
             $IntuneCount = 0
             $AutopilotCount = 0
     
             foreach ($SearchText in $SearchTexts) {
-                if (![string]::IsNullOrEmpty($SearchText)) {
-                    if ($searchOption -eq "Devicename") {
-                        # Get Entra ID Device
-                        $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$SearchText'"
-                        $AADDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-                        
-                        # Get Intune Device
-                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq '$SearchText'"
-                        $IntuneDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-    
+                if ($searchOption -eq "Devicename") {
+                    # Get Entra ID Device
+                    $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$SearchText'"
+                    $AADDevices = Get-GraphPagedResults -Uri $uri
+                    
+                    # Get Intune Device
+                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq '$SearchText'"
+                    $IntuneDevices = Get-GraphPagedResults -Uri $uri
+
+                    if ($AADDevices -and $IntuneDevices) {
                         foreach ($AADDevice in $AADDevices) {
-                            foreach ($IntuneDevice in $IntuneDevices) {
-                                if ($IntuneDevice.deviceName -eq $AADDevice.displayName) {
-                                    # Get Autopilot Device
-                                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$($IntuneDevice.serialNumber)')"
-                                    $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-    
-                                    $CombinedDevice = New-Object DeviceObject
-                                    $CombinedDevice.IsSelected = $false
-                                    $CombinedDevice.DeviceName = $IntuneDevice.deviceName
-                                    $CombinedDevice.SerialNumber = $IntuneDevice.serialNumber
-                                    $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
-                                    $CombinedDevice.PrimaryUser = $IntuneDevice.userDisplayName
-                                    $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
-                                    $CombinedDevice.IntuneLastContact = $IntuneDevice.lastSyncDateTime
-                                    $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
-                                    
-                                    $searchResults.Add($CombinedDevice)
-                                    if ($AADDevice) { $AADCount++ }
-                                    if ($IntuneDevice) { $IntuneCount++ }
-                                    if ($AutopilotDevice) { $AutopilotCount++ }
-                                }
+                            $matchingIntuneDevice = $IntuneDevices | Where-Object { $_.deviceName -eq $AADDevice.displayName } | Select-Object -First 1
+                            if ($matchingIntuneDevice) {
+                                # Get Autopilot Device
+                                $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$($matchingIntuneDevice.serialNumber)')"
+                                $AutopilotDevice = (Get-GraphPagedResults -Uri $uri) | Select-Object -First 1
+
+                                $CombinedDevice = New-Object DeviceObject
+                                $CombinedDevice.IsSelected = $false
+                                $CombinedDevice.DeviceName = $matchingIntuneDevice.deviceName
+                                $CombinedDevice.SerialNumber = $matchingIntuneDevice.serialNumber
+                                $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
+                                $CombinedDevice.PrimaryUser = $matchingIntuneDevice.userDisplayName
+                                $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
+                                $CombinedDevice.IntuneLastContact = $matchingIntuneDevice.lastSyncDateTime
+                                $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
+                                
+                                $searchResults.Add($CombinedDevice)
+                                $AADCount++
+                                $IntuneCount++
+                                if ($AutopilotDevice) { $AutopilotCount++ }
                             }
                         }
                     }
-                    elseif ($searchOption -eq "Serialnumber") {
-                        # Get Intune Device
-                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=serialNumber eq '$SearchText'"
-                        $IntuneDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-                        
-                        if ($IntuneDevices) {
-                            $displayName = $IntuneDevices[0].deviceName
+                }
+                elseif ($searchOption -eq "Serialnumber") {
+                    # Get Intune Device
+                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=serialNumber eq '$SearchText'"
+                    $IntuneDevices = Get-GraphPagedResults -Uri $uri
+                    
+                    if ($IntuneDevices) {
+                        foreach ($IntuneDevice in $IntuneDevices) {
+                            $displayName = $IntuneDevice.deviceName
                             # Get Entra ID Device
                             $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$displayName'"
-                            $AADDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-    
-                            foreach ($AADDevice in $AADDevices) {
-                                foreach ($IntuneDevice in $IntuneDevices) {
-                                    if ($IntuneDevice.deviceName -eq $AADDevice.displayName) {
-                                        # Get Autopilot Device
-                                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$SearchText')"
-                                        $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
-                        
-                                        $CombinedDevice = New-Object DeviceObject
-                                        $CombinedDevice.IsSelected = $false
-                                        $CombinedDevice.DeviceName = $IntuneDevice.deviceName
-                                        $CombinedDevice.SerialNumber = $IntuneDevice.serialNumber
-                                        $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
-                                        $CombinedDevice.PrimaryUser = $IntuneDevice.userDisplayName
-                                        $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
-                                        $CombinedDevice.IntuneLastContact = $IntuneDevice.lastSyncDateTime
-                                        $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
-                        
-                                        $searchResults.Add($CombinedDevice)
-                                        if ($AADDevice) { $AADCount++ }
-                                        if ($IntuneDevice) { $IntuneCount++ }
-                                        if ($AutopilotDevice) { $AutopilotCount++ }
-                                    }
-                                }
+                            $AADDevice = (Get-GraphPagedResults -Uri $uri) | Select-Object -First 1
+
+                            if ($AADDevice) {
+                                # Get Autopilot Device
+                                $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$SearchText')"
+                                $AutopilotDevice = (Get-GraphPagedResults -Uri $uri) | Select-Object -First 1
+                    
+                                $CombinedDevice = New-Object DeviceObject
+                                $CombinedDevice.IsSelected = $false
+                                $CombinedDevice.DeviceName = $IntuneDevice.deviceName
+                                $CombinedDevice.SerialNumber = $IntuneDevice.serialNumber
+                                $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
+                                $CombinedDevice.PrimaryUser = $IntuneDevice.userDisplayName
+                                $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
+                                $CombinedDevice.IntuneLastContact = $IntuneDevice.lastSyncDateTime
+                                $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
+                    
+                                $searchResults.Add($CombinedDevice)
+                                $AADCount++
+                                $IntuneCount++
+                                if ($AutopilotDevice) { $AutopilotCount++ }
                             }
                         }
                     }
@@ -862,7 +1037,13 @@ $SearchButton.Add_Click({
             $Window.FindName('aad_status').Text = "AzureAD: $AADCount Available"
             $Window.FindName('aad_status').Foreground = if ($AADCount -gt 0) { 'Green' } else { 'Red' }
     
-            $Window.FindName('SearchResultsDataGrid').ItemsSource = $searchResults
+            if ($searchResults.Count -gt 0) {
+                $SearchResultsDataGrid.ItemsSource = $searchResults
+            }
+            else {
+                $SearchResultsDataGrid.ItemsSource = $null
+                [System.Windows.MessageBox]::Show("No devices found matching the search criteria.")
+            }
             
             # Ensure Offboard button is disabled until selection
             $OffboardButton.IsEnabled = $false
@@ -989,24 +1170,116 @@ $logs_button.Add_Click({
     })
         
 # Add new control connections
+$MenuDashboard = $Window.FindName('MenuDashboard')
 $MenuDeviceManagement = $Window.FindName('MenuDeviceManagement')
 $MenuPlaybooks = $Window.FindName('MenuPlaybooks')
+$DashboardPage = $Window.FindName('DashboardPage')
 $DeviceManagementPage = $Window.FindName('DeviceManagementPage')
 $PlaybooksPage = $Window.FindName('PlaybooksPage')
 $PlaybookResultsGrid = $Window.FindName('PlaybookResultsGrid')
 $PlaybookResultsDataGrid = $Window.FindName('PlaybookResultsDataGrid')
 
+# Set initial page visibility
+$Window.Add_Loaded({
+        # Set initial page visibility
+        $DashboardPage.Visibility = 'Visible'
+        $DeviceManagementPage.Visibility = 'Collapsed'
+        $PlaybooksPage.Visibility = 'Collapsed'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
+
+        # Update dashboard statistics if connected
+        if (-not $AuthenticateButton.IsEnabled) {
+            Update-DashboardStatistics
+        }
+    })
+
 # Add menu switching functionality
+$MenuDashboard.Add_Checked({
+        $DashboardPage.Visibility = 'Visible'
+        $DeviceManagementPage.Visibility = 'Collapsed'
+        $PlaybooksPage.Visibility = 'Collapsed'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
+        
+        # Update dashboard statistics if connected
+        if (-not $AuthenticateButton.IsEnabled) {
+            Update-DashboardStatistics
+        }
+    })
+
 $MenuDeviceManagement.Add_Checked({
+        $DashboardPage.Visibility = 'Collapsed'
         $DeviceManagementPage.Visibility = 'Visible'
         $PlaybooksPage.Visibility = 'Collapsed'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
     })
 
 $MenuPlaybooks.Add_Checked({
+        $DashboardPage.Visibility = 'Collapsed'
         $DeviceManagementPage.Visibility = 'Collapsed'
         $PlaybooksPage.Visibility = 'Visible'
         $PlaybookResultsGrid.Visibility = 'Collapsed'
     })
+
+function Update-DashboardStatistics {
+    try {
+        # Get all managed devices with pagination
+        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices"
+        $devices = Get-GraphPagedResults -Uri $uri
+
+        # Update device statistics
+        $totalDevices = $devices.Count
+        $windowsDevices = ($devices | Where-Object { $_.operatingSystem -eq 'Windows' }).Count
+        $macOSDevices = ($devices | Where-Object { $_.operatingSystem -eq 'macOS' }).Count
+        $mobileDevices = ($devices | Where-Object { $_.operatingSystem -in @('iOS', 'Android') }).Count
+
+        $Window.FindName('TotalDevicesCount').Text = $totalDevices
+        $Window.FindName('WindowsDevicesCount').Text = $windowsDevices
+        $Window.FindName('MacOSDevicesCount').Text = $macOSDevices
+        $Window.FindName('MobileDevicesCount').Text = $mobileDevices
+
+        # Update compliance statistics
+        $compliantDevices = ($devices | Where-Object { $_.complianceState -eq 'compliant' }).Count
+        $nonCompliantDevices = ($devices | Where-Object { $_.complianceState -eq 'noncompliant' }).Count
+        $unknownCompliance = ($devices | Where-Object { $_.complianceState -eq 'unknown' }).Count
+
+        $Window.FindName('CompliantDevicesCount').Text = $compliantDevices
+        $Window.FindName('NonCompliantDevicesCount').Text = $nonCompliantDevices
+        $Window.FindName('UnknownComplianceCount').Text = $unknownCompliance
+
+        # Update stale devices statistics (>30 days)
+        $thirtyDaysAgo = (Get-Date).AddDays(-30).ToString('yyyy-MM-ddTHH:mm:ssZ')
+        
+        $staleWindows = ($devices | Where-Object { $_.operatingSystem -eq 'Windows' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+        $staleMacOS = ($devices | Where-Object { $_.operatingSystem -eq 'macOS' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+        $staleiOS = ($devices | Where-Object { $_.operatingSystem -eq 'iOS' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+        $staleAndroid = ($devices | Where-Object { $_.operatingSystem -eq 'Android' -and $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
+
+        $Window.FindName('StaleWindowsCount').Text = $staleWindows
+        $Window.FindName('StaleMacOSCount').Text = $staleMacOS
+        $Window.FindName('StaleiOSCount').Text = $staleiOS
+        $Window.FindName('StaleAndroidCount').Text = $staleAndroid
+
+        # Update recent activity
+        $recentActivity = $devices | 
+        Sort-Object lastSyncDateTime -Descending | 
+        Select-Object -First 10 | 
+        ForEach-Object {
+            $activity = "Device: $($_.deviceName)"
+            $activity += " | Last Sync: $($_.lastSyncDateTime)"
+            $activity
+        }
+
+        $RecentActivityList = $Window.FindName('RecentActivityList')
+        $RecentActivityList.Items.Clear()
+        foreach ($activity in $recentActivity) {
+            $RecentActivityList.Items.Add($activity)
+        }
+    }
+    catch {
+        Write-Log "Error updating dashboard statistics: $_"
+        [System.Windows.MessageBox]::Show("Error updating dashboard statistics. Please ensure you are connected to MS Graph.")
+    }
+}
 
 # Connect playbook buttons
 $PlaybookButtons = @(
@@ -1029,6 +1302,37 @@ foreach ($button in $PlaybookButtons) {
             Write-Log "Playbook clicked: $($this.Content)"
         })
 }
+
+# Results Grid
+$SearchResultsDataGrid = $Window.FindName('SearchResultsDataGrid')
+$OffboardButton = $Window.FindName('OffboardButton')
+
+# Initially disable the Offboard button
+$OffboardButton.IsEnabled = $false
+
+# Add selection changed event handler for the DataGrid
+$SearchResultsDataGrid.Add_SelectionChanged({
+        # Update the Offboard button state based on selected devices
+        $selectedDevices = $SearchResultsDataGrid.ItemsSource | Where-Object { $_.IsSelected }
+        $OffboardButton.IsEnabled = ($null -ne $selectedDevices -and $selectedDevices.Count -gt 0)
+    })
+
+# Add handler for checkbox selection changes
+$SearchResultsDataGrid.Add_LoadingRow({
+        param($sender, $e)
+        $row = $e.Row
+        $dataContext = $row.DataContext
+        if ($dataContext -and $dataContext.GetType().Name -eq 'DeviceObject') {
+            $dataContext.add_PropertyChanged({
+                    param($s, $ev)
+                    if ($ev.PropertyName -eq 'IsSelected') {
+                        # Update Offboard button state
+                        $selectedDevices = $SearchResultsDataGrid.ItemsSource | Where-Object { $_.IsSelected }
+                        $OffboardButton.IsEnabled = ($null -ne $selectedDevices -and $selectedDevices.Count -gt 0)
+                    }
+                })
+        }
+    })
 
 # Show Window
 $Window.ShowDialog() | Out-Null
