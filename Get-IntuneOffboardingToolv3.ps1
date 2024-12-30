@@ -1,39 +1,478 @@
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName System.Windows.Forms
 
+# Add the DeviceObject class definition
+Add-Type -TypeDefinition @"
+    using System;
+    using System.ComponentModel;
+
+    public class DeviceObject : INotifyPropertyChanged
+    {
+        private bool isSelected;
+        public bool IsSelected
+        {
+            get { return isSelected; }
+            set 
+            { 
+                isSelected = value;
+                OnPropertyChanged("IsSelected");
+            }
+        }
+        
+        public string DeviceName { get; set; }
+        public string SerialNumber { get; set; }
+        public string OperatingSystem { get; set; }
+        public string PrimaryUser { get; set; }
+        public DateTime? AzureADLastContact { get; set; }
+        public DateTime? IntuneLastContact { get; set; }
+        public DateTime? AutopilotLastContact { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string name)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+    }
+"@
+
 # Define WPF XAML
 [xml]$xaml = @"
 <Window 
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Intune Offboarding Tool" Height="500" Width="570" ResizeMode="NoResize">
+    Title="Intune Offboarding Tool" Height="700" Width="1200" 
+    Background="#F0F0F0"
+    WindowStartupLocation="CenterScreen" 
+    ResizeMode="NoResize">
+    
+    <Window.Resources>
+        <!-- Base Button Style -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="2" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Menu Button Style -->
+        <Style x:Key="MenuButtonStyle" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#808080"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0">
+                            <Grid>
+                                <Border x:Name="indicator" 
+                                        Width="3" 
+                                        Background="Transparent"
+                                        HorizontalAlignment="Left"/>
+                                <ContentPresenter Margin="20,0,0,0" 
+                                                VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#404040"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="indicator" Property="Background" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#404040"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="indicator" Property="Background" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sidebar Connection Button Style -->
+        <Style x:Key="SidebarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#404040"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="2"
+                                BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#505050"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#333333"/>
+                                <Setter Property="Foreground" Value="#808080"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Playbook Button Style -->
+        <Style x:Key="PlaybookButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#28A745"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="20,15"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Left" 
+                                                VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#218838"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- DataGrid Style -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowHeight" Value="35"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8F8F8"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#E0E0E0"/>
+            <Setter Property="ColumnHeaderHeight" Value="32"/>
+        </Style>
+
+        <!-- DataGridColumnHeader Style -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
+    </Window.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="5*"/>
-            <RowDefinition Height="212*"/>
-        </Grid.RowDefinitions>
-        <Button x:Name="SearchButton" Content="Search" HorizontalAlignment="Left" Margin="393,100,0,0" VerticalAlignment="Top" Width="92" Grid.Row="1" Height="22"/>
-        <Button x:Name="AuthenticateButton" Content="Connect to MS Graph" HorizontalAlignment="Left" Margin="76,42,0,0" VerticalAlignment="Top" Width="131" Grid.Row="1"/>
-        <Button x:Name="InstallModulesButton" Content="Install/Update Modules" HorizontalAlignment="Left" Margin="318,42,0,0" VerticalAlignment="Top" Width="167" Height="20" Grid.Row="1"/>
-        <TextBox x:Name="SearchInputText" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"  HorizontalAlignment="Left" Margin="176,73,0,0" VerticalAlignment="Top" Width="213" Height="22" Grid.Row="1" FontSize="12"/>
-        <Button x:Name="OffboardButton" Content="Offboard device(s) from Intune, AutoPilot and Azure AD" HorizontalAlignment="Left" Margin="78,333,0,0" VerticalAlignment="Top" Width="308" Grid.Row="1"/>
-        <Label Content="Intune Offboarding Tool" HorizontalAlignment="Left" VerticalAlignment="Top" Height="49" Width="264" FontSize="24" Grid.Row="1" Margin="160,0,0,0"/>
-        <TextBlock x:Name="intune_status" HorizontalAlignment="Left" Margin="79,251,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="154"><Run Language="de-de" Text="Intune Status"/></TextBlock>
-        <TextBlock x:Name="autopilot_status" HorizontalAlignment="Left" Margin="79,272,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="154"><Run Language="de-de" Text="Autopilot"/><Run Text=" Status"/></TextBlock>
-        <TextBlock x:Name="aad_status" HorizontalAlignment="Left" Margin="79,293,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="154"><Run Language="de-de" Text="Azure AD"/><Run Text=" Status"/></TextBlock>
-        <ComboBox x:Name="dropdown" HorizontalAlignment="Left" Margin="76,73,0,0" Grid.Row="1" VerticalAlignment="Top" Width="95"/>
-        <DataGrid x:Name="SearchResultsDataGrid" Grid.Row="1" Margin="78,127,71,210"/>
-        <Button x:Name="logs_button" Content="Logs" HorizontalAlignment="Left" Margin="504,422,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <Button x:Name="export_button" Content="Export results" HorizontalAlignment="Left" Margin="409,252,0,0" Grid.Row="1" VerticalAlignment="Top"/>
-        <Button x:Name="bulk_import_button" Content="Bulk Import" HorizontalAlignment="Left" Margin="392,73,0,0" VerticalAlignment="Top" Width="93" Grid.Row="1" Height="22"/>
-        <ComboBox x:Name="dropdown_lastsync_days" HorizontalAlignment="Left" Margin="79,367,0,0" Grid.Row="1" VerticalAlignment="Top" Width="94"/>
-        <Button x:Name="export_stale_devices_button" Content="Export Stale devices" HorizontalAlignment="Left" Margin="195,367,0,0" VerticalAlignment="Top" Width="118" Grid.Row="1" Height="23"/>
-        <ComboBox x:Name="dropdown_lastsync_platform" HorizontalAlignment="Left" Margin="79,396,0,0" Grid.Row="1" VerticalAlignment="Top" Width="94"/>
-        <Button x:Name="disconnect_button" Content="Disconnect" Width="80" HorizontalAlignment="Left" Margin="419,422,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-        <Button x:Name="check_permissions_button" Content="Check Permissions" HorizontalAlignment="Left" Margin="212,42,0,0" Grid.Row="1" VerticalAlignment="Top" />
-    </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="#2D2D2D">
+            <DockPanel>
+                <TextBlock Text="Intune Offboarding" 
+                          Foreground="White"
+                          FontSize="20"
+                          FontWeight="SemiBold"
+                          Padding="15,15,15,20"
+                          DockPanel.Dock="Top"/>
+
+                <!-- Menu Items -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,15">
+                    <Button x:Name="AuthenticateButton" 
+                            Content="Connect to MS Graph" 
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5"/>
+                    <Button x:Name="CheckPermissionsButton" 
+                            Content="Check Permissions" 
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5"/>
+                    <Button x:Name="InstallModulesButton" 
+                            Content="Install/Update Modules"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5"/>
+                </StackPanel>
+                
+                <!-- Navigation Menu -->
+                <StackPanel Margin="0,10,0,0">
+                    <RadioButton x:Name="MenuDeviceManagement"
+                                Content="Device Management"
+                                Style="{StaticResource MenuButtonStyle}"
+                                IsChecked="True"
+                                GroupName="MenuGroup"/>
+                    <RadioButton x:Name="MenuPlaybooks"
+                                Content="Playbooks"
+                                Style="{StaticResource MenuButtonStyle}"
+                                GroupName="MenuGroup"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid x:Name="MainContent" Grid.Column="1" Margin="20">
+            <!-- Device Management Page -->
+            <Grid x:Name="DeviceManagementPage">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Search Controls -->
+                <Grid Grid.Row="1" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox x:Name="dropdown" 
+                              Margin="0,0,8,0"/>
+                    <TextBox x:Name="SearchInputText" 
+                             Grid.Column="1" 
+                             Margin="0,0,8,0"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"/>
+                    <Button x:Name="bulk_import_button" 
+                            Grid.Column="2" 
+                            Content="Bulk Import" 
+                            Margin="0,0,8,0"/>
+                    <Button x:Name="SearchButton" 
+                            Grid.Column="3" 
+                            Content="Search"/>
+                </Grid>
+
+                <!-- Results Grid -->
+                <DataGrid x:Name="SearchResultsDataGrid" 
+                          Grid.Row="3"
+                          Margin="0,0,0,15"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="All"
+                          CanUserResizeRows="False"
+                          CanUserReorderColumns="False"
+                          SelectionMode="Extended"
+                          SelectionUnit="FullRow">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" 
+                                                  Header="Select" 
+                                                  Width="50"
+                                                  IsReadOnly="False"/>
+                        <DataGridTextColumn Binding="{Binding DeviceName}" 
+                                                  Header="Device Name" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding SerialNumber}" 
+                                                  Header="Serial Number" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding OperatingSystem}" 
+                                                  Header="OS" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding PrimaryUser}" 
+                                                  Header="Primary User" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding AzureADLastContact}" 
+                                                  Header="Entra ID Last Contact" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding IntuneLastContact}" 
+                                                  Header="Intune Last Contact" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                        <DataGridTextColumn Binding="{Binding AutopilotLastContact}" 
+                                                  Header="Autopilot Last Contact" 
+                                                  Width="*"
+                                                  IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Status Section -->
+                <StackPanel Grid.Row="4" 
+                            Margin="0,0,0,15">
+                    <TextBlock x:Name="intune_status" 
+                              Margin="0,0,0,4" 
+                              FontSize="12"/>
+                    <TextBlock x:Name="autopilot_status" 
+                              Margin="0,0,0,4" 
+                              FontSize="12"/>
+                    <TextBlock x:Name="aad_status" 
+                              Margin="0,0,0,4" 
+                              FontSize="12"/>
+                </StackPanel>
+
+                <!-- Bottom Section -->
+                <Grid Grid.Row="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Side -->
+                    <Button x:Name="OffboardButton" 
+                            Content="Offboard device(s)" 
+                            Background="#D83B01"
+                            Grid.Column="0"
+                            Margin="0,0,8,0"/>
+
+                    <!-- Center - Stale Devices -->
+                    <ComboBox x:Name="dropdown_lastsync_platform" 
+                              Width="120"
+                              Grid.Column="1"
+                              Margin="0,0,8,0"/>
+                    <ComboBox x:Name="dropdown_lastsync_days" 
+                              Width="120"
+                              Grid.Column="2"
+                              Margin="0,0,8,0"/>
+
+                    <!-- Right Side -->
+                    <Button x:Name="export_stale_devices_button" 
+                            Content="Export Stale Devices"
+                            Grid.Column="3"
+                            Margin="0,0,8,0"/>
+                    <Button x:Name="disconnect_button" 
+                            Content="Disconnect"
+                            Grid.Column="4"
+                            Margin="0,0,8,0"/>
+                    <Button x:Name="logs_button" 
+                            Content="Logs"
+                            Grid.Column="5"/>
+                </Grid>
+            </Grid>
+
+            <!-- Playbooks Page -->
+            <Grid x:Name="PlaybooksPage" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="20">
+                    <TextBlock Text="Playbooks" 
+                              FontSize="24"
+                              FontWeight="SemiBold"
+                              Foreground="#323130"
+                              Margin="0,0,0,10"/>
+                    <TextBlock Text="Select a playbook to execute and view device information."
+                              Opacity="0.7"
+                              Margin="0,0,0,20"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" 
+                             Margin="20,0,20,20" 
+                             VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Button x:Name="PlaybookAutopilotNotIntune"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all devices that are in Autopilot but not in Intune"/>
+                        <Button x:Name="PlaybookIntuneNotAutopilot"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all devices that are in Intune but not in Autopilot"/>
+                        <Button x:Name="PlaybookCorporateDevices"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all Corporate devices in Intune"/>
+                        <Button x:Name="PlaybookPersonalDevices"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all Personal devices in Intune"/>
+                        <Button x:Name="PlaybookStaleDevices"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all Stale Devices in Intune"/>
+                        <Button x:Name="PlaybookSpecificOS"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all devices with a specific OS in Intune"/>
+                        <Button x:Name="PlaybookNotLatestOS"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all devices that are not on the latest OS"/>
+                        <Button x:Name="PlaybookEOLOS"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all devices in Intune with a End-of-life OS Version"/>
+                        <Button x:Name="PlaybookBitLocker"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all Windows Devices and BitLocker Keys"/>
+                        <Button x:Name="PlaybookFileVault"
+                                Style="{StaticResource PlaybookButtonStyle}"
+                                Content="List all macOS Devices and FileVault Keys"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Playbook Results -->
+                <Grid x:Name="PlaybookResultsGrid" 
+                      Visibility="Collapsed"
+                      Grid.Row="1">
+                    <DataGrid x:Name="PlaybookResultsDataGrid"
+                             Margin="20"
+                             Style="{StaticResource {x:Type DataGrid}}"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
 </Window>
 "@
 
@@ -64,22 +503,19 @@ $InstallModulesButton = $Window.FindName("InstallModulesButton")
 $bulk_import_button = $Window.FindName('bulk_import_button')
 $Dropdown = $Window.FindName("dropdown")
 $Disconnect = $Window.FindName('disconnect_button')
-$Export_Button = $Window.FindName('export_button')
 $logs_button = $Window.FindName('logs_button')
-$CheckPermissionsButton = $Window.FindName('check_permissions_button')
+$CheckPermissionsButton = $Window.FindName('CheckPermissionsButton')
 
 $Dropdown_LastSync_Platform = $Window.FindName('dropdown_lastsync_platform')
 $Dropdown_LastSync_Days = $Window.FindName('dropdown_lastsync_days')
 $Export_Stale_Devices = $Window.FindName('export_stale_devices_button')
 
 $SearchInputText.Add_GotFocus({
-        $SearchInputText.Height = 50  
-        $SearchInputText.Width = 213
+        # Empty - no resizing needed
     })
 
 $SearchInputText.Add_LostFocus({
-        $SearchInputText.Height = 22  
-        $SearchInputText.Width = 213
+        # Empty - no resizing needed
     })
     
 $Window.Add_Loaded({
@@ -215,33 +651,6 @@ $CheckPermissionsButton.Add_Click({
         }
     })
 
-$Export_Button.Add_Click({
-        try {
-            Write-Log "Export button clicked, attempting to export data..."
-
-            $data = $Window.FindName('SearchResultsDataGrid').ItemsSource
-    
-            if ($data -ne $null -and $data.Count -gt 0) {
-
-                $outputPath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "SearchResults.csv")
-    
-
-                $data | Export-Csv -Path $outputPath -NoTypeInformation
-    
-                Write-Log "Search results exported successfully to SearchResults.csv on your Desktop."
-                [System.Windows.MessageBox]::Show("Search results exported successfully to SearchResults.csv on your Desktop.")
-            }
-            else {
-                Write-Log "No search results to export."
-                [System.Windows.MessageBox]::Show("No search results to export.")
-            }
-        }
-        catch {
-            Write-Log "Error occurred during the export operation: $_"
-            [System.Windows.MessageBox]::Show("Error in export operation.")
-        }
-    })
-    
 $Export_Stale_Devices.Add_Click({
         try {
             Write-Log "Export stale devices button clicked, attempting to export data..."
@@ -286,9 +695,7 @@ $Window.Add_Loaded({
             Write-Log "Window is loading..."
       
             $modules = @(
-                "Microsoft.Graph.Identity.DirectoryManagement",
-                "Microsoft.Graph.DeviceManagement",
-                "Microsoft.Graph.DeviceManagement.Enrollment"
+                "Microsoft.Graph.Authentication"
             )
       
             if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
@@ -356,9 +763,7 @@ $InstallModulesButton.Add_Click({
     
 
 $SearchButton.Add_Click({
-
         if ($AuthenticateButton.IsEnabled) {
-            
             Write-Log "User is not connected to MS Graph. Attempted search operation."
             [System.Windows.MessageBox]::Show("You are not connected to MS Graph. Please connect first.")
             return
@@ -377,7 +782,7 @@ $SearchButton.Add_Click({
             foreach ($SearchText in $SearchTexts) {
                 if (![string]::IsNullOrEmpty($SearchText)) {
                     if ($searchOption -eq "Devicename") {
-                        # Get Azure AD Device
+                        # Get Entra ID Device
                         $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$SearchText'"
                         $AADDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
                         
@@ -392,18 +797,17 @@ $SearchButton.Add_Click({
                                     $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$($IntuneDevice.serialNumber)')"
                                     $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
     
-                                    $CombinedDevice = New-Object PSObject -Property @{
-                                        "DeviceName"             = $IntuneDevice.deviceName
-                                        "SerialNumber"           = $IntuneDevice.serialNumber
-                                        "OperatingSystem"        = $AADDevice.operatingSystem
-                                        "Primary User"           = $IntuneDevice.userDisplayName
-                                        "AzureAD Last Contact"   = $AADDevice.approximateLastSignInDateTime
-                                        "Intune Last Contact"    = $IntuneDevice.lastSyncDateTime
-                                        "Autopilot Last Contact" = $AutopilotDevice.lastContactedDateTime
-                                    }
+                                    $CombinedDevice = New-Object DeviceObject
+                                    $CombinedDevice.IsSelected = $false
+                                    $CombinedDevice.DeviceName = $IntuneDevice.deviceName
+                                    $CombinedDevice.SerialNumber = $IntuneDevice.serialNumber
+                                    $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
+                                    $CombinedDevice.PrimaryUser = $IntuneDevice.userDisplayName
+                                    $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
+                                    $CombinedDevice.IntuneLastContact = $IntuneDevice.lastSyncDateTime
+                                    $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
                                     
-    
-                                    $searchResults.Add($CombinedDevice) | Select-Object "DeviceName", "SerialNumber", "OperatingSystem", "Primary User", "AzureAD Last Contact", "Intune Last Contact", "Autopilot Last Contact"
+                                    $searchResults.Add($CombinedDevice)
                                     if ($AADDevice) { $AADCount++ }
                                     if ($IntuneDevice) { $IntuneCount++ }
                                     if ($AutopilotDevice) { $AutopilotCount++ }
@@ -418,7 +822,7 @@ $SearchButton.Add_Click({
                         
                         if ($IntuneDevices) {
                             $displayName = $IntuneDevices[0].deviceName
-                            # Get Azure AD Device
+                            # Get Entra ID Device
                             $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$displayName'"
                             $AADDevices = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
     
@@ -429,17 +833,17 @@ $SearchButton.Add_Click({
                                         $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$SearchText')"
                                         $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value
                         
-                                        $CombinedDevice = New-Object PSObject -Property @{
-                                            "DeviceName"             = $IntuneDevice.deviceName
-                                            "SerialNumber"           = $IntuneDevice.serialNumber
-                                            "OperatingSystem"        = $AADDevice.operatingSystem
-                                            "Primary User"           = $IntuneDevice.userDisplayName
-                                            "AzureAD Last Contact"   = $AADDevice.approximateLastSignInDateTime
-                                            "Intune Last Contact"    = $IntuneDevice.lastSyncDateTime
-                                            "Autopilot Last Contact" = $AutopilotDevice.lastContactedDateTime
-                                        }
+                                        $CombinedDevice = New-Object DeviceObject
+                                        $CombinedDevice.IsSelected = $false
+                                        $CombinedDevice.DeviceName = $IntuneDevice.deviceName
+                                        $CombinedDevice.SerialNumber = $IntuneDevice.serialNumber
+                                        $CombinedDevice.OperatingSystem = $AADDevice.operatingSystem
+                                        $CombinedDevice.PrimaryUser = $IntuneDevice.userDisplayName
+                                        $CombinedDevice.AzureADLastContact = $AADDevice.approximateLastSignInDateTime
+                                        $CombinedDevice.IntuneLastContact = $IntuneDevice.lastSyncDateTime
+                                        $CombinedDevice.AutopilotLastContact = $AutopilotDevice.lastContactedDateTime
                         
-                                        $searchResults.Add($CombinedDevice) | Select-Object "DeviceName", "SerialNumber", "OperatingSystem", "Primary User", "AzureAD Last Contact", "Intune Last Contact", "Autopilot Last Contact"
+                                        $searchResults.Add($CombinedDevice)
                                         if ($AADDevice) { $AADCount++ }
                                         if ($IntuneDevice) { $IntuneCount++ }
                                         if ($AutopilotDevice) { $AutopilotCount++ }
@@ -459,6 +863,9 @@ $SearchButton.Add_Click({
             $Window.FindName('aad_status').Foreground = if ($AADCount -gt 0) { 'Green' } else { 'Red' }
     
             $Window.FindName('SearchResultsDataGrid').ItemsSource = $searchResults
+            
+            # Ensure Offboard button is disabled until selection
+            $OffboardButton.IsEnabled = $false
         }
         catch {
             Write-Log "Error occurred during search operation. Exception: $_"
@@ -494,73 +901,73 @@ $bulk_import_button.Add_Click({
     })
 
 $OffboardButton.Add_Click({
-
         if ($AuthenticateButton.IsEnabled) {
             Write-Log "User is not connected to MS Graph. Attempted offboarding operation."
             [System.Windows.MessageBox]::Show("You are not connected to MS Graph. Please connect first.")
             return
         }
 
-        $confirmationResult = [System.Windows.MessageBox]::Show("Are you sure you want to proceed with offboarding? This action cannot be undone.", "Confirm Offboarding", [System.Windows.MessageBoxButton]::YesNo)
+        $selectedDevices = $SearchResultsDataGrid.ItemsSource | Where-Object { $_.IsSelected }
+        
+        if (-not $selectedDevices) {
+            [System.Windows.MessageBox]::Show("Please select at least one device to offboard.")
+            return
+        }
+
+        $confirmationResult = [System.Windows.MessageBox]::Show("Are you sure you want to proceed with offboarding the selected device(s)? This action cannot be undone.", "Confirm Offboarding", [System.Windows.MessageBoxButton]::YesNo)
         if ($confirmationResult -eq 'No') {
             Write-Log "User canceled offboarding operation."
             return
         }
 
         try {
-            $SearchTexts = $SearchInputText.Text -split ', '
+            foreach ($device in $selectedDevices) {
+                $deviceName = $device.DeviceName
+                # Get Entra ID Device
+                $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$deviceName'"
+                $AADDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
 
-            foreach ($SearchText in $SearchTexts) {
-                if (![string]::IsNullOrEmpty($SearchText)) {
-                    # Get Azure AD Device
-                    $uri = "https://graph.microsoft.com/v1.0/devices?`$filter=displayName eq '$SearchText'"
-                    $AADDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
+                # Get Intune Device
+                $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq '$deviceName'"
+                $IntuneDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
 
-                    # Get Intune Device
-                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?`$filter=deviceName eq '$SearchText'"
-                    $IntuneDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
+                # Get Autopilot Device
+                if ($IntuneDevice) {
+                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$($IntuneDevice.serialNumber)')"
+                    $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
+                }
 
-                    # Get Autopilot Device
-                    if ($IntuneDevice) {
-                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities?`$filter=contains(serialNumber,'$($IntuneDevice.serialNumber)')"
-                        $AutopilotDevice = (Invoke-MgGraphRequest -Uri $uri -Method GET).value | Select-Object -First 1
-                    }
-
-                    if ($AADDevice) {
-                        $uri = "https://graph.microsoft.com/v1.0/devices/$($AADDevice.id)"
-                        Invoke-MgGraphRequest -Uri $uri -Method DELETE
-                        [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from AzureAD.")
-                        $Window.FindName('aad_status').Text = "AzureAD: Unavailable"
-                        Write-Log "Successfully removed device $SearchText from Azure AD."
-                    }
-                    else {
-                        [System.Windows.MessageBox]::Show("Device $SearchText not found in AzureAD.")
-                    }
-
-                    if ($IntuneDevice) {
-                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices/$($IntuneDevice.id)"
-                        Invoke-MgGraphRequest -Uri $uri -Method DELETE
-                        [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from Intune.")
-                        $Window.FindName('intune_status').Text = "Intune: Unavailable"
-                        Write-Log "Successfully removed device $SearchText from Intune."
-                    }
-                    else {
-                        [System.Windows.MessageBox]::Show("Device $SearchText not found in Intune.")
-                    }
-
-                    if ($AutopilotDevice) {
-                        $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities/$($AutopilotDevice.id)"
-                        Invoke-MgGraphRequest -Uri $uri -Method DELETE
-                        [System.Windows.MessageBox]::Show("Successfully removed device $SearchText from Autopilot.")
-                        $Window.FindName('autopilot_status').Text = "Autopilot: Unavailable"
-                        Write-Log "Successfully removed device $SearchText from Autopilot."
-                    }
-                    else {
-                        [System.Windows.MessageBox]::Show("Device $SearchText not found in Autopilot.")
-                    }
+                if ($AADDevice) {
+                    $uri = "https://graph.microsoft.com/v1.0/devices/$($AADDevice.id)"
+                    Invoke-MgGraphRequest -Uri $uri -Method DELETE
+                    [System.Windows.MessageBox]::Show("Successfully removed device $deviceName from AzureAD.")
+                    $Window.FindName('aad_status').Text = "AzureAD: Unavailable"
+                    Write-Log "Successfully removed device $deviceName from Entra ID."
                 }
                 else {
-                    [System.Windows.MessageBox]::Show("Please provide a valid device name.")
+                    [System.Windows.MessageBox]::Show("Device $deviceName not found in AzureAD.")
+                }
+
+                if ($IntuneDevice) {
+                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices/$($IntuneDevice.id)"
+                    Invoke-MgGraphRequest -Uri $uri -Method DELETE
+                    [System.Windows.MessageBox]::Show("Successfully removed device $deviceName from Intune.")
+                    $Window.FindName('intune_status').Text = "Intune: Unavailable"
+                    Write-Log "Successfully removed device $deviceName from Intune."
+                }
+                else {
+                    [System.Windows.MessageBox]::Show("Device $deviceName not found in Intune.")
+                }
+
+                if ($AutopilotDevice) {
+                    $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities/$($AutopilotDevice.id)"
+                    Invoke-MgGraphRequest -Uri $uri -Method DELETE
+                    [System.Windows.MessageBox]::Show("Successfully removed device $deviceName from Autopilot.")
+                    $Window.FindName('autopilot_status').Text = "Autopilot: Unavailable"
+                    Write-Log "Successfully removed device $deviceName from Autopilot."
+                }
+                else {
+                    [System.Windows.MessageBox]::Show("Device $deviceName not found in Autopilot.")
                 }
             }
         }
@@ -581,5 +988,47 @@ $logs_button.Add_Click({
         }
     })
         
+# Add new control connections
+$MenuDeviceManagement = $Window.FindName('MenuDeviceManagement')
+$MenuPlaybooks = $Window.FindName('MenuPlaybooks')
+$DeviceManagementPage = $Window.FindName('DeviceManagementPage')
+$PlaybooksPage = $Window.FindName('PlaybooksPage')
+$PlaybookResultsGrid = $Window.FindName('PlaybookResultsGrid')
+$PlaybookResultsDataGrid = $Window.FindName('PlaybookResultsDataGrid')
+
+# Add menu switching functionality
+$MenuDeviceManagement.Add_Checked({
+        $DeviceManagementPage.Visibility = 'Visible'
+        $PlaybooksPage.Visibility = 'Collapsed'
+    })
+
+$MenuPlaybooks.Add_Checked({
+        $DeviceManagementPage.Visibility = 'Collapsed'
+        $PlaybooksPage.Visibility = 'Visible'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
+    })
+
+# Connect playbook buttons
+$PlaybookButtons = @(
+    $Window.FindName('PlaybookAutopilotNotIntune'),
+    $Window.FindName('PlaybookIntuneNotAutopilot'),
+    $Window.FindName('PlaybookCorporateDevices'),
+    $Window.FindName('PlaybookPersonalDevices'),
+    $Window.FindName('PlaybookStaleDevices'),
+    $Window.FindName('PlaybookSpecificOS'),
+    $Window.FindName('PlaybookNotLatestOS'),
+    $Window.FindName('PlaybookEOLOS'),
+    $Window.FindName('PlaybookBitLocker'),
+    $Window.FindName('PlaybookFileVault')
+)
+
+# Add click handlers for playbook buttons
+foreach ($button in $PlaybookButtons) {
+    $button.Add_Click({
+            # We'll implement the playbook functionality in the next step
+            Write-Log "Playbook clicked: $($this.Content)"
+        })
+}
+
 # Show Window
 $Window.ShowDialog() | Out-Null
