@@ -287,10 +287,14 @@ function Get-GraphPagedResults {
                 
                 <!-- Navigation Menu -->
                 <StackPanel Margin="0,10,0,0">
+                    <RadioButton x:Name="MenuHome"
+                                Content="Home"
+                                Style="{StaticResource MenuButtonStyle}"
+                                IsChecked="True"
+                                GroupName="MenuGroup"/>
                     <RadioButton x:Name="MenuDashboard"
                                 Content="Dashboard"
                                 Style="{StaticResource MenuButtonStyle}"
-                                IsChecked="True"
                                 GroupName="MenuGroup"/>
                     <RadioButton x:Name="MenuDeviceManagement"
                                 Content="Device Management"
@@ -306,6 +310,57 @@ function Get-GraphPagedResults {
 
         <!-- Main Content Area -->
         <Grid x:Name="MainContent" Grid.Column="1" Margin="20">
+            <!-- Home Page -->
+            <Grid x:Name="HomePage" Visibility="Visible">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="0"
+                          Text="Welcome to Intune Offboarding Tool"
+                          FontSize="24"
+                          FontWeight="SemiBold"
+                          Margin="0,0,0,20"/>
+
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Margin="0,20,0,0">
+                    <TextBlock Text="This tool helps you manage and offboard devices from:"
+                             FontSize="16"
+                             Margin="0,0,0,15"/>
+                    <TextBlock Text="• Microsoft Intune"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="• Windows Autopilot"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="• Microsoft Entra ID (formerly Azure AD)"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    
+                    <TextBlock Text="Getting Started:"
+                             FontSize="16"
+                             FontWeight="SemiBold"
+                             Margin="0,30,0,15"/>
+                    <TextBlock Text="1. Connect to MS Graph using the button in the sidebar"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="2. Check permissions to ensure you have the required access"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="3. Navigate to Device Management to search and manage devices"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="4. Use the Dashboard to view device statistics"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                    <TextBlock Text="5. Explore Playbooks for common management tasks"
+                             FontSize="14"
+                             Margin="20,0,0,10"/>
+                </StackPanel>
+            </Grid>
+
             <!-- Dashboard Page -->
             <Grid x:Name="DashboardPage">
                 <Grid.RowDefinitions>
@@ -1139,9 +1194,11 @@ $logs_button.Add_Click({
     })
         
 # Add new control connections
+$MenuHome = $Window.FindName('MenuHome')
 $MenuDashboard = $Window.FindName('MenuDashboard')
 $MenuDeviceManagement = $Window.FindName('MenuDeviceManagement')
 $MenuPlaybooks = $Window.FindName('MenuPlaybooks')
+$HomePage = $Window.FindName('HomePage')
 $DashboardPage = $Window.FindName('DashboardPage')
 $DeviceManagementPage = $Window.FindName('DeviceManagementPage')
 $PlaybooksPage = $Window.FindName('PlaybooksPage')
@@ -1151,7 +1208,8 @@ $PlaybookResultsDataGrid = $Window.FindName('PlaybookResultsDataGrid')
 # Set initial page visibility
 $Window.Add_Loaded({
         # Set initial page visibility
-        $DashboardPage.Visibility = 'Visible'
+        $HomePage.Visibility = 'Visible'
+        $DashboardPage.Visibility = 'Collapsed'
         $DeviceManagementPage.Visibility = 'Collapsed'
         $PlaybooksPage.Visibility = 'Collapsed'
         $PlaybookResultsGrid.Visibility = 'Collapsed'
@@ -1163,7 +1221,16 @@ $Window.Add_Loaded({
     })
 
 # Add menu switching functionality
+$MenuHome.Add_Checked({
+        $HomePage.Visibility = 'Visible'
+        $DashboardPage.Visibility = 'Collapsed'
+        $DeviceManagementPage.Visibility = 'Collapsed'
+        $PlaybooksPage.Visibility = 'Collapsed'
+        $PlaybookResultsGrid.Visibility = 'Collapsed'
+    })
+
 $MenuDashboard.Add_Checked({
+        $HomePage.Visibility = 'Collapsed'
         $DashboardPage.Visibility = 'Visible'
         $DeviceManagementPage.Visibility = 'Collapsed'
         $PlaybooksPage.Visibility = 'Collapsed'
@@ -1176,6 +1243,7 @@ $MenuDashboard.Add_Checked({
     })
 
 $MenuDeviceManagement.Add_Checked({
+        $HomePage.Visibility = 'Collapsed'
         $DashboardPage.Visibility = 'Collapsed'
         $DeviceManagementPage.Visibility = 'Visible'
         $PlaybooksPage.Visibility = 'Collapsed'
@@ -1183,6 +1251,7 @@ $MenuDeviceManagement.Add_Checked({
     })
 
 $MenuPlaybooks.Add_Checked({
+        $HomePage.Visibility = 'Collapsed'
         $DashboardPage.Visibility = 'Collapsed'
         $DeviceManagementPage.Visibility = 'Collapsed'
         $PlaybooksPage.Visibility = 'Visible'
@@ -1329,6 +1398,7 @@ $AuthenticateButton.Add_Click({
 
 # Update dashboard when switching to Dashboard tab
 $MenuDashboard.Add_Checked({
+        $HomePage.Visibility = 'Collapsed'
         $DashboardPage.Visibility = 'Visible'
         $DeviceManagementPage.Visibility = 'Collapsed'
         $PlaybooksPage.Visibility = 'Collapsed'
