@@ -399,13 +399,23 @@ function Get-GraphPagedResults {
             <DockPanel>
                 <!-- Menu Items -->
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,0">
-                    <Button x:Name="AuthenticateButton" 
-                            Content="Connect to MS Graph" 
-                            Style="{StaticResource SidebarButtonStyle}"
-                            Margin="15,5"/>
+                    <!-- Prominent Connect Button -->
+                    <Border Margin="15,5,15,10" 
+                            Background="#0078D4" 
+                            CornerRadius="4">
+                        <Button x:Name="AuthenticateButton" 
+                                Content="Connect to MS Graph" 
+                                Style="{StaticResource SidebarButtonStyle}"
+                                Background="Transparent"
+                                Foreground="White"
+                                Height="40"
+                                Margin="0"/>
+                    </Border>
+
                     <Button x:Name="CheckPermissionsButton" 
                             Content="Check Permissions" 
                             Style="{StaticResource SidebarButtonStyle}"
+                            IsEnabled="False"
                             Margin="15,5"/>
                     <Button x:Name="InstallModulesButton" 
                             Content="Install/Update Modules"
@@ -418,6 +428,7 @@ function Get-GraphPagedResults {
                     <Button x:Name="disconnect_button" 
                             Content="Disconnect"
                             Style="{StaticResource SidebarButtonStyle}"
+                            IsEnabled="False"
                             Margin="15,5"/>
                 </StackPanel>
                 
@@ -426,20 +437,19 @@ function Get-GraphPagedResults {
                     <RadioButton x:Name="MenuHome"
                                 Content="Home"
                                 Style="{StaticResource MenuButtonStyle}"
-                                IsChecked="True"
-                                GroupName="MenuGroup"/>
+                                IsChecked="True"/>
                     <RadioButton x:Name="MenuDashboard"
                                 Content="Dashboard"
                                 Style="{StaticResource MenuButtonStyle}"
-                                GroupName="MenuGroup"/>
+                                IsEnabled="False"/>
                     <RadioButton x:Name="MenuDeviceManagement"
                                 Content="Device Management"
                                 Style="{StaticResource MenuButtonStyle}"
-                                GroupName="MenuGroup"/>
+                                IsEnabled="False"/>
                     <RadioButton x:Name="MenuPlaybooks"
                                 Content="Playbooks"
                                 Style="{StaticResource MenuButtonStyle}"
-                                GroupName="MenuGroup"/>
+                                IsEnabled="False"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -1559,6 +1569,14 @@ $Window.Add_Loaded({
                 $AuthenticateButton.IsEnabled = $true
                 $Disconnect.IsEnabled = $false
                 $CheckPermissionsButton.IsEnabled = $false
+                
+                # Disable navigation menus
+                $MenuDashboard.IsEnabled = $false
+                $MenuDeviceManagement.IsEnabled = $false
+                $MenuPlaybooks.IsEnabled = $false
+                
+                # Force Home menu selection
+                $MenuHome.IsChecked = $true
             }
             else {
                 Write-Log "Successfully connected to MS Graph"
@@ -1566,6 +1584,11 @@ $Window.Add_Loaded({
                 $AuthenticateButton.IsEnabled = $false
                 $Disconnect.IsEnabled = $true
                 $CheckPermissionsButton.IsEnabled = $true
+                
+                # Enable navigation menus
+                $MenuDashboard.IsEnabled = $true
+                $MenuDeviceManagement.IsEnabled = $true
+                $MenuPlaybooks.IsEnabled = $true
                 
                 # Update dashboard statistics for existing connection
                 Update-DashboardStatistics
@@ -1600,6 +1623,11 @@ $Window.Add_Loaded({
             $AuthenticateButton.IsEnabled = $true
             $Disconnect.IsEnabled = $false
             $CheckPermissionsButton.IsEnabled = $false
+            
+            # Disable navigation menus
+            $MenuDashboard.IsEnabled = $false
+            $MenuDeviceManagement.IsEnabled = $false
+            $MenuPlaybooks.IsEnabled = $false
         }
     })
     
@@ -1616,6 +1644,12 @@ $Disconnect.Add_Click({
             $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
             $CheckPermissionsButton.IsEnabled = $false
+            
+            # Disable navigation menus and force Home selection
+            $MenuDashboard.IsEnabled = $false
+            $MenuDeviceManagement.IsEnabled = $false
+            $MenuPlaybooks.IsEnabled = $false
+            $MenuHome.IsChecked = $true
             
             # Clear any sensitive data from the dashboard
             $Window.FindName('IntuneDevicesCount').Text = "0"
@@ -1668,6 +1702,11 @@ $AuthenticateButton.Add_Click({
                 $Disconnect.IsEnabled = $true
                 $CheckPermissionsButton.IsEnabled = $true
 
+                # Enable navigation menus
+                $MenuDashboard.IsEnabled = $true
+                $MenuDeviceManagement.IsEnabled = $true
+                $MenuPlaybooks.IsEnabled = $true
+
                 # Update dashboard statistics after successful authentication
                 Update-DashboardStatistics
             }
@@ -1678,6 +1717,11 @@ $AuthenticateButton.Add_Click({
                 $Disconnect.Content = "Disconnected"
                 $Disconnect.IsEnabled = $false
                 $CheckPermissionsButton.IsEnabled = $false
+                
+                # Disable navigation menus
+                $MenuDashboard.IsEnabled = $false
+                $MenuDeviceManagement.IsEnabled = $false
+                $MenuPlaybooks.IsEnabled = $false
             }
         }
         catch {
@@ -1687,6 +1731,11 @@ $AuthenticateButton.Add_Click({
             $Disconnect.Content = "Disconnected"
             $Disconnect.IsEnabled = $false
             $CheckPermissionsButton.IsEnabled = $false
+            
+            # Disable navigation menus
+            $MenuDashboard.IsEnabled = $false
+            $MenuDeviceManagement.IsEnabled = $false
+            $MenuPlaybooks.IsEnabled = $false
         }
     })
     
