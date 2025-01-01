@@ -412,6 +412,71 @@ function Get-GraphPagedResults {
                                 Margin="0"/>
                     </Border>
 
+                    <!-- Tenant Info Section -->
+                    <Border x:Name="TenantInfoSection"
+                            Margin="15,0,15,10"
+                            Background="#404040"
+                            CornerRadius="4"
+                            Visibility="Collapsed">
+                        <StackPanel Margin="12,8">
+                            <TextBlock Text="Connected Tenant"
+                                     Foreground="#A0A0A0"
+                                     FontSize="12"
+                                     Margin="0,0,0,4"/>
+                            <TextBlock x:Name="TenantDisplayName"
+                                     Text=""
+                                     Foreground="White"
+                                     FontSize="14"
+                                     TextWrapping="Wrap"
+                                     Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Text="Domain: "
+                                         Grid.Row="0"
+                                         Foreground="#A0A0A0"
+                                         FontSize="11"
+                                         VerticalAlignment="Center"/>
+                                <TextBox x:Name="TenantDomain"
+                                       Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text=""
+                                       Foreground="#A0A0A0"
+                                       FontSize="11"
+                                       Background="Transparent"
+                                       BorderThickness="0"
+                                       IsReadOnly="True"
+                                       TextWrapping="NoWrap"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,0,4"/>
+
+                                <TextBlock Text="Tenant ID: "
+                                         Grid.Row="1"
+                                         Foreground="#A0A0A0"
+                                         FontSize="11"
+                                         VerticalAlignment="Center"/>
+                                <TextBox x:Name="TenantId"
+                                       Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text=""
+                                       Foreground="#A0A0A0"
+                                       FontSize="11"
+                                       Background="Transparent"
+                                       BorderThickness="0"
+                                       IsReadOnly="True"
+                                       TextWrapping="NoWrap"
+                                       VerticalAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
                     <Button x:Name="CheckPermissionsButton" 
                             Content="Check Permissions" 
                             Style="{StaticResource SidebarButtonStyle}"
@@ -1431,12 +1496,6 @@ function Connect-ToGraph {
                 Disconnect-MgGraph -ErrorAction SilentlyContinue
                 
                 $connectionResult = Connect-MgGraph -ClientId $AuthDetails.AppId -TenantId $AuthDetails.TenantId -CertificateThumbprint $AuthDetails.Thumbprint -NoWelcome -ErrorAction Stop
-                
-                # Verify connection was successful
-                $context = Get-MgContext
-                if (-not $context) {
-                    throw "Failed to establish connection with certificate authentication"
-                }
             }
             'Secret' {
                 if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId) -or
@@ -1445,18 +1504,10 @@ function Connect-ToGraph {
                     throw "Secret authentication requires App ID, Tenant ID, and Client Secret"
                 }
                 
-                # Create client secret credential
                 $SecuredPasswordPassword = ConvertTo-SecureString -String $AuthDetails.Secret -AsPlainText -Force
+                $ClientSecretCredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $AuthDetails.AppId, $SecuredPasswordPassword
                 
-                $ClientSecretCredential = New-Object -TypeName System.Management.Automation.PSCredential `
-                    -ArgumentList $AuthDetails.AppId, $SecuredPasswordPassword
-                
-                # Get required permissions
-                $permissionsList = ($script:requiredPermissions | ForEach-Object { $_.Permission })
-                
-                $connectionResult = Connect-MgGraph -TenantId $AuthDetails.TenantId `
-                    -ClientSecretCredential $ClientSecretCredential `
-                    -NoWelcome -ErrorAction Stop
+                $connectionResult = Connect-MgGraph -TenantId $AuthDetails.TenantId -ClientSecretCredential $ClientSecretCredential -NoWelcome -ErrorAction Stop
             }
             default {
                 throw "Invalid authentication method specified"
@@ -1467,6 +1518,29 @@ function Connect-ToGraph {
         $context = Get-MgContext
         if (-not $context) {
             throw "Failed to get Microsoft Graph context after connection"
+        }
+
+        # Get tenant details and update UI
+        try {
+            Write-Log "Retrieving tenant information..."
+            $tenantInfo = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/organization" -Method GET
+            if ($tenantInfo.value) {
+                $org = $tenantInfo.value[0]
+                Write-Log "Found tenant: $($org.displayName)"
+                
+                # Update UI elements
+                $Window.FindName('TenantDisplayName').Text = $org.displayName
+                $Window.FindName('TenantId').Text = $org.id
+                $Window.FindName('TenantDomain').Text = $org.verifiedDomains[0].name
+                $Window.FindName('TenantInfoSection').Visibility = 'Visible'
+            }
+            else {
+                Write-Log "Warning: No tenant information found in response"
+            }
+        }
+        catch {
+            Write-Log "Warning: Could not retrieve tenant details: $_"
+            # Don't throw here, as the connection is still valid
         }
 
         $currentPermissions = $context.Scopes
@@ -1492,13 +1566,6 @@ function Connect-ToGraph {
         }
 
         Write-Log "Successfully connected to Microsoft Graph"
-        
-        # Close any open authentication dialogs
-        $authWindow = [System.Windows.Application]::Current.Windows | Where-Object { $_.Title -eq "Authentication" }
-        if ($authWindow) {
-            $authWindow.Close()
-        }
-        
         return $true
     }
     catch {
@@ -1644,6 +1711,12 @@ $Disconnect.Add_Click({
             $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
             $CheckPermissionsButton.IsEnabled = $false
+            
+            # Hide tenant info
+            $Window.FindName('TenantInfoSection').Visibility = 'Collapsed'
+            $Window.FindName('TenantDisplayName').Text = ""
+            $Window.FindName('TenantId').Text = ""
+            $Window.FindName('TenantDomain').Text = ""
             
             # Disable navigation menus and force Home selection
             $MenuDashboard.IsEnabled = $false
