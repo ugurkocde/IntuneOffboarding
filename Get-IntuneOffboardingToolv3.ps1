@@ -243,6 +243,149 @@ function Get-GraphPagedResults {
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
         </Style>
+
+        <!-- Authentication Radio Button Style -->
+        <Style x:Key="AuthRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Margin" Value="0,8,8,8"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#2D3748"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="#E2E8F0"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse x:Name="radioOuter"
+                                         Width="18" Height="18"
+                                         Stroke="#CBD5E0"
+                                         StrokeThickness="2"
+                                         Fill="Transparent"/>
+                                <Ellipse x:Name="radioInner"
+                                         Width="10" Height="10"
+                                         Fill="#0078D4"
+                                         Opacity="0"/>
+                                <ContentPresenter Grid.Column="1"
+                                                Margin="12,0,0,0"
+                                                VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F7FAFC"/>
+                                <Setter TargetName="radioOuter" Property="Stroke" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="radioInner" Property="Opacity" Value="1"/>
+                                <Setter TargetName="radioOuter" Property="Stroke" Value="#0078D4"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="border" Property="Background" Value="#F0F9FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style x:Key="AuthTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Password Box Style -->
+        <Style x:Key="AuthPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="AuthButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="24,0"/>
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="24,0"/>
+            <Setter Property="Background" Value="#F0F0F0"/>
+            <Setter Property="Foreground" Value="#2D3748"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E2E2E2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#D4D4D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -739,124 +882,339 @@ function Get-GraphPagedResults {
 <Window 
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Authentication" Height="450" Width="600"
+    Title="Authentication" Height="500" Width="650"
     WindowStartupLocation="CenterScreen"
-    Background="#F0F0F0">
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    Background="#F8F9FA">
+    
+    <Window.Resources>
+        <!-- Radio Button Style -->
+        <Style x:Key="AuthRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Margin" Value="0,8,8,8"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#2D3748"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="#E2E8F0"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="24"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse x:Name="radioOuter"
+                                         Width="18" Height="18"
+                                         Stroke="#CBD5E0"
+                                         StrokeThickness="2"
+                                         Fill="Transparent"/>
+                                <Ellipse x:Name="radioInner"
+                                         Width="10" Height="10"
+                                         Fill="#0078D4"
+                                         Opacity="0"/>
+                                <ContentPresenter Grid.Column="1"
+                                                Margin="12,0,0,0"
+                                                VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F7FAFC"/>
+                                <Setter TargetName="radioOuter" Property="Stroke" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="radioInner" Property="Opacity" Value="1"/>
+                                <Setter TargetName="radioOuter" Property="Stroke" Value="#0078D4"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="border" Property="Background" Value="#F0F9FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <TextBlock Text="Select Authentication Method" 
-                  FontSize="20" 
-                  FontWeight="SemiBold" 
-                  Margin="0,0,0,20"/>
+        <!-- TextBox Style -->
+        <Style x:Key="AuthTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#0078D4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-        <StackPanel Grid.Row="1" Margin="0,10">
-            <RadioButton x:Name="InteractiveAuth" 
-                        Content="Interactive Login (Admin User)" 
-                        Margin="0,0,0,10" 
-                        IsChecked="True"/>
-            
-            <RadioButton x:Name="CertificateAuth" 
-                        Content="App Registration with Certificate" 
-                        Margin="0,0,0,10"/>
-            
-            <Grid x:Name="CertificateInputs" 
-                  Margin="20,0,0,10" 
-                  Visibility="Collapsed">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <!-- Password Box Style -->
+        <Style x:Key="AuthPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
 
-                <TextBlock Text="App ID:" 
-                          Grid.Row="0" 
-                          VerticalAlignment="Center"/>
-                <TextBox x:Name="CertAppId" 
-                         Grid.Row="0" 
-                         Grid.Column="1" 
-                         Margin="0,5"/>
+        <!-- Button Style -->
+        <Style x:Key="AuthButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="24,0"/>
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                <TextBlock Text="Tenant ID:" 
-                          Grid.Row="1" 
-                          VerticalAlignment="Center"/>
-                <TextBox x:Name="CertTenantId" 
-                         Grid.Row="1" 
-                         Grid.Column="1" 
-                         Margin="0,5"/>
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="24,0"/>
+            <Setter Property="Background" Value="#F0F0F0"/>
+            <Setter Property="Foreground" Value="#2D3748"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E2E2E2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#D4D4D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
-                <TextBlock Text="Thumbprint:" 
-                          Grid.Row="2" 
-                          VerticalAlignment="Center"/>
-                <TextBox x:Name="CertThumbprint" 
-                         Grid.Row="2" 
-                         Grid.Column="1" 
-                         Margin="0,5"/>
-            </Grid>
+    <Border Background="White" 
+            CornerRadius="8" 
+            Margin="16">
+        <DockPanel Margin="24">
+            <!-- Header -->
+            <StackPanel DockPanel.Dock="Top" 
+                       Margin="0,0,0,24">
+                <TextBlock Text="Connect to Microsoft Graph" 
+                          FontSize="24" 
+                          FontWeight="SemiBold" 
+                          Foreground="#1A202C"/>
+                <TextBlock Text="Choose your preferred authentication method to connect to Microsoft Graph API"
+                          Foreground="#4A5568"
+                          FontSize="14"
+                          Margin="0,8,0,0"/>
+            </StackPanel>
 
-            <RadioButton x:Name="SecretAuth" 
-                        Content="App Registration with Secret" 
-                        Margin="0,0,0,10"/>
-            
-            <Grid x:Name="SecretInputs" 
-                  Margin="20,0,0,10" 
-                  Visibility="Collapsed">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Action Buttons -->
+            <StackPanel DockPanel.Dock="Bottom" 
+                       Orientation="Horizontal" 
+                       HorizontalAlignment="Right"
+                       Margin="0,24,0,0">
+                <Button x:Name="CancelAuthButton" 
+                        Content="Cancel" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Width="120" 
+                        Margin="0,0,12,0"/>
+                <Button x:Name="ConnectButton" 
+                        Content="Connect" 
+                        Style="{StaticResource AuthButtonStyle}"
+                        Width="120"/>
+            </StackPanel>
 
-                <TextBlock Text="App ID:" 
-                          Grid.Row="0" 
-                          VerticalAlignment="Center"/>
-                <TextBox x:Name="SecretAppId" 
-                         Grid.Row="0" 
-                         Grid.Column="1" 
-                         Margin="0,5"/>
+            <!-- Scrollable Content -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         Padding="0,0,16,0">
+                <StackPanel Margin="0,0,8,0">
+                    <RadioButton x:Name="InteractiveAuth" 
+                                Style="{StaticResource AuthRadioButtonStyle}"
+                                Content="Interactive Login (Admin User)" 
+                                IsChecked="True"/>
+                    
+                    <RadioButton x:Name="CertificateAuth" 
+                                Style="{StaticResource AuthRadioButtonStyle}"
+                                Content="App Registration with Certificate"/>
+                    
+                    <Grid x:Name="CertificateInputs" 
+                          Margin="44,8,0,16" 
+                          Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Tenant ID:" 
-                          Grid.Row="1" 
-                          VerticalAlignment="Center"/>
-                <TextBox x:Name="SecretTenantId" 
-                         Grid.Row="1" 
-                         Grid.Column="1" 
-                         Margin="0,5"/>
+                        <TextBlock Text="App ID" 
+                                  Grid.Row="0" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <TextBox x:Name="CertAppId" 
+                                 Grid.Row="0" 
+                                 Grid.Column="1"
+                                 Style="{StaticResource AuthTextBoxStyle}"/>
 
-                <TextBlock Text="Client Secret:" 
-                          Grid.Row="2" 
-                          VerticalAlignment="Center"/>
-                <PasswordBox x:Name="ClientSecret" 
-                            Grid.Row="2" 
-                            Grid.Column="1" 
-                            Margin="0,5"/>
-            </Grid>
-        </StackPanel>
+                        <TextBlock Text="Tenant ID" 
+                                  Grid.Row="1" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <TextBox x:Name="CertTenantId" 
+                                 Grid.Row="1" 
+                                 Grid.Column="1"
+                                 Style="{StaticResource AuthTextBoxStyle}"/>
 
-        <StackPanel Grid.Row="2" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right">
-            <Button x:Name="CancelAuthButton" 
-                    Content="Cancel" 
-                    Width="100" 
-                    Margin="0,0,10,0"/>
-            <Button x:Name="ConnectButton" 
-                    Content="Connect" 
-                    Width="100"/>
-        </StackPanel>
-    </Grid>
+                        <TextBlock Text="Thumbprint" 
+                                  Grid.Row="2" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <TextBox x:Name="CertThumbprint" 
+                                 Grid.Row="2" 
+                                 Grid.Column="1"
+                                 Style="{StaticResource AuthTextBoxStyle}"/>
+
+                        <!-- Import Button -->
+                        <Button x:Name="ImportCertButton"
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Content="Import"
+                                HorizontalAlignment="Right"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="32"
+                                Width="120"
+                                Margin="0,12,0,0"/>
+
+                        <!-- Help Text -->
+                        <TextBlock Grid.Row="4" 
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="2"
+                                  Text="Import format: JSON file (.json) containing AppId, TenantId, and Thumbprint"
+                                  Foreground="#718096"
+                                  HorizontalAlignment="Right"
+                                  FontSize="12"
+                                  Margin="0,8,0,0"
+                                  TextWrapping="Wrap"/>
+                    </Grid>
+
+                    <RadioButton x:Name="SecretAuth" 
+                                Style="{StaticResource AuthRadioButtonStyle}"
+                                Content="App Registration with Secret"/>
+                    
+                    <Grid x:Name="SecretInputs" 
+                          Margin="44,8,0,16" 
+                          Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="App ID" 
+                                  Grid.Row="0" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <TextBox x:Name="SecretAppId" 
+                                 Grid.Row="0" 
+                                 Grid.Column="1"
+                                 Style="{StaticResource AuthTextBoxStyle}"/>
+
+                        <TextBlock Text="Tenant ID" 
+                                  Grid.Row="1" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <TextBox x:Name="SecretTenantId" 
+                                 Grid.Row="1" 
+                                 Grid.Column="1"
+                                 Style="{StaticResource AuthTextBoxStyle}"/>
+
+                        <TextBlock Text="Client Secret" 
+                                  Grid.Row="2" 
+                                  VerticalAlignment="Center"
+                                  Foreground="#4A5568"/>
+                        <PasswordBox x:Name="ClientSecret" 
+                                    Grid.Row="2" 
+                                    Grid.Column="1"
+                                    Style="{StaticResource AuthPasswordBoxStyle}"/>
+
+                        <!-- Import Button -->
+                        <Button x:Name="ImportSecretButton"
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Content="Import"
+                                HorizontalAlignment="Right"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="32"
+                                Width="120"
+                                Margin="0,12,0,0"/>
+
+                        <!-- Help Text -->
+                        <TextBlock Grid.Row="4" 
+                                  Grid.Column="0"
+                                  Grid.ColumnSpan="2"
+                                  Text="Import format: JSON file (.json) containing AppId, TenantId, and ClientSecret"
+                                  Foreground="#718096"
+                                  HorizontalAlignment="Right"
+                                  FontSize="12"
+                                  Margin="0,8,0,0"
+                                  TextWrapping="Wrap"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
 </Window>
 "@
 
@@ -904,6 +1262,8 @@ function Show-AuthenticationDialog {
     $secretInputs = $authWindow.FindName('SecretInputs')
     $connectButton = $authWindow.FindName('ConnectButton')
     $cancelAuthButton = $authWindow.FindName('CancelAuthButton')
+    $importCertButton = $authWindow.FindName('ImportCertButton')
+    $importSecretButton = $authWindow.FindName('ImportSecretButton')
 
     # Add event handlers for radio buttons
     $certificateAuth.Add_Checked({
@@ -919,6 +1279,75 @@ function Show-AuthenticationDialog {
     $interactiveAuth.Add_Checked({
             $certificateInputs.Visibility = 'Collapsed'
             $secretInputs.Visibility = 'Collapsed'
+        })
+
+    # Add import button handlers
+    $importCertButton.Add_Click({
+            $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+            $OpenFileDialog.Filter = "JSON files (*.json)|*.json"
+            $OpenFileDialog.Title = "Import Certificate Configuration"
+        
+            if ($OpenFileDialog.ShowDialog() -eq 'OK') {
+                try {
+                    $config = Get-Content $OpenFileDialog.FileName | ConvertFrom-Json
+                
+                    if ($config.AppId -and $config.TenantId -and $config.Thumbprint) {
+                        $authWindow.FindName('CertAppId').Text = $config.AppId
+                        $authWindow.FindName('CertTenantId').Text = $config.TenantId
+                        $authWindow.FindName('CertThumbprint').Text = $config.Thumbprint
+                    }
+                    else {
+                        [System.Windows.MessageBox]::Show(
+                            "Invalid configuration file. Please ensure it contains AppId, TenantId, and Thumbprint.",
+                            "Invalid Configuration",
+                            [System.Windows.MessageBoxButton]::OK,
+                            [System.Windows.MessageBoxImage]::Warning
+                        )
+                    }
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show(
+                        "Error reading configuration file: $_",
+                        "Error",
+                        [System.Windows.MessageBoxButton]::OK,
+                        [System.Windows.MessageBoxImage]::Error
+                    )
+                }
+            }
+        })
+
+    $importSecretButton.Add_Click({
+            $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+            $OpenFileDialog.Filter = "JSON files (*.json)|*.json"
+            $OpenFileDialog.Title = "Import Secret Configuration"
+        
+            if ($OpenFileDialog.ShowDialog() -eq 'OK') {
+                try {
+                    $config = Get-Content $OpenFileDialog.FileName | ConvertFrom-Json
+                
+                    if ($config.AppId -and $config.TenantId -and $config.ClientSecret) {
+                        $authWindow.FindName('SecretAppId').Text = $config.AppId
+                        $authWindow.FindName('SecretTenantId').Text = $config.TenantId
+                        $authWindow.FindName('ClientSecret').Password = $config.ClientSecret
+                    }
+                    else {
+                        [System.Windows.MessageBox]::Show(
+                            "Invalid configuration file. Please ensure it contains AppId, TenantId, and ClientSecret.",
+                            "Invalid Configuration",
+                            [System.Windows.MessageBoxButton]::OK,
+                            [System.Windows.MessageBoxImage]::Warning
+                        )
+                    }
+                }
+                catch {
+                    [System.Windows.MessageBox]::Show(
+                        "Error reading configuration file: $_",
+                        "Error",
+                        [System.Windows.MessageBoxButton]::OK,
+                        [System.Windows.MessageBoxImage]::Error
+                    )
+                }
+            }
         })
 
     # Add event handlers for buttons
