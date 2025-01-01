@@ -70,7 +70,7 @@ function Get-GraphPagedResults {
 <Window 
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Intune Offboarding Tool" Height="700" Width="1200" 
+    Title="Device Offboarding Manager" Height="700" Width="1200" 
     Background="#F0F0F0"
     WindowStartupLocation="CenterScreen" 
     ResizeMode="NoResize">
@@ -254,15 +254,8 @@ function Get-GraphPagedResults {
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="#2D2D2D">
             <DockPanel>
-                <TextBlock Text="Intune Offboarding" 
-                          Foreground="White"
-                          FontSize="20"
-                          FontWeight="SemiBold"
-                          Padding="15,15,15,20"
-                          DockPanel.Dock="Top"/>
-
                 <!-- Menu Items -->
-                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,15">
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,0">
                     <Button x:Name="AuthenticateButton" 
                             Content="Connect to MS Graph" 
                             Style="{StaticResource SidebarButtonStyle}"
@@ -319,7 +312,7 @@ function Get-GraphPagedResults {
 
                 <!-- Header -->
                 <TextBlock Grid.Row="0"
-                          Text="Welcome to Intune Offboarding Tool"
+                          Text="Welcome to the Device Offboarding Manager"
                           FontSize="24"
                           FontWeight="SemiBold"
                           Margin="0,0,0,20"/>
