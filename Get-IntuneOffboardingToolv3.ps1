@@ -734,8 +734,348 @@ function Get-GraphPagedResults {
 </Window>
 "@
 
+# Define Authentication Modal XAML
+[xml]$authModalXaml = @"
+<Window 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Authentication" Height="450" Width="600"
+    WindowStartupLocation="CenterScreen"
+    Background="#F0F0F0">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Select Authentication Method" 
+                  FontSize="20" 
+                  FontWeight="SemiBold" 
+                  Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1" Margin="0,10">
+            <RadioButton x:Name="InteractiveAuth" 
+                        Content="Interactive Login (Admin User)" 
+                        Margin="0,0,0,10" 
+                        IsChecked="True"/>
+            
+            <RadioButton x:Name="CertificateAuth" 
+                        Content="App Registration with Certificate" 
+                        Margin="0,0,0,10"/>
+            
+            <Grid x:Name="CertificateInputs" 
+                  Margin="20,0,0,10" 
+                  Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="App ID:" 
+                          Grid.Row="0" 
+                          VerticalAlignment="Center"/>
+                <TextBox x:Name="CertAppId" 
+                         Grid.Row="0" 
+                         Grid.Column="1" 
+                         Margin="0,5"/>
+
+                <TextBlock Text="Tenant ID:" 
+                          Grid.Row="1" 
+                          VerticalAlignment="Center"/>
+                <TextBox x:Name="CertTenantId" 
+                         Grid.Row="1" 
+                         Grid.Column="1" 
+                         Margin="0,5"/>
+
+                <TextBlock Text="Thumbprint:" 
+                          Grid.Row="2" 
+                          VerticalAlignment="Center"/>
+                <TextBox x:Name="CertThumbprint" 
+                         Grid.Row="2" 
+                         Grid.Column="1" 
+                         Margin="0,5"/>
+            </Grid>
+
+            <RadioButton x:Name="SecretAuth" 
+                        Content="App Registration with Secret" 
+                        Margin="0,0,0,10"/>
+            
+            <Grid x:Name="SecretInputs" 
+                  Margin="20,0,0,10" 
+                  Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="App ID:" 
+                          Grid.Row="0" 
+                          VerticalAlignment="Center"/>
+                <TextBox x:Name="SecretAppId" 
+                         Grid.Row="0" 
+                         Grid.Column="1" 
+                         Margin="0,5"/>
+
+                <TextBlock Text="Tenant ID:" 
+                          Grid.Row="1" 
+                          VerticalAlignment="Center"/>
+                <TextBox x:Name="SecretTenantId" 
+                         Grid.Row="1" 
+                         Grid.Column="1" 
+                         Margin="0,5"/>
+
+                <TextBlock Text="Client Secret:" 
+                          Grid.Row="2" 
+                          VerticalAlignment="Center"/>
+                <PasswordBox x:Name="ClientSecret" 
+                            Grid.Row="2" 
+                            Grid.Column="1" 
+                            Margin="0,5"/>
+            </Grid>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button x:Name="CancelAuthButton" 
+                    Content="Cancel" 
+                    Width="100" 
+                    Margin="0,0,10,0"/>
+            <Button x:Name="ConnectButton" 
+                    Content="Connect" 
+                    Width="100"/>
+        </StackPanel>
+    </Grid>
+</Window>
+"@
+
+# Define required permissions with reasons
+$script:requiredPermissions = @(
+    @{
+        Permission = "User.Read.All"
+        Reason     = "Required to read user profile information and check group memberships"
+    },
+    @{
+        Permission = "Group.Read.All"
+        Reason     = "Needed to read group information and memberships"
+    },
+    @{
+        Permission = "DeviceManagementConfiguration.Read.All"
+        Reason     = "Allows reading Intune device configuration policies and their assignments"
+    },
+    @{
+        Permission = "DeviceManagementApps.Read.All"
+        Reason     = "Necessary to read mobile app management policies and app configurations"
+    },
+    @{
+        Permission = "DeviceManagementManagedDevices.ReadWrite.All"
+        Reason     = "Required to read and modify managed device information and compliance policies"
+    },
+    @{
+        Permission = "Device.Read.All"
+        Reason     = "Needed to read device information from Entra ID"
+    },
+    @{
+        Permission = "DeviceManagementServiceConfig.ReadWrite.All"
+        Reason     = "Required for Autopilot configuration and management"
+    }
+)
+
+function Show-AuthenticationDialog {
+    $reader = (New-Object System.Xml.XmlNodeReader $authModalXaml)
+    $authWindow = [Windows.Markup.XamlReader]::Load($reader)
+
+    # Get controls
+    $interactiveAuth = $authWindow.FindName('InteractiveAuth')
+    $certificateAuth = $authWindow.FindName('CertificateAuth')
+    $secretAuth = $authWindow.FindName('SecretAuth')
+    $certificateInputs = $authWindow.FindName('CertificateInputs')
+    $secretInputs = $authWindow.FindName('SecretInputs')
+    $connectButton = $authWindow.FindName('ConnectButton')
+    $cancelAuthButton = $authWindow.FindName('CancelAuthButton')
+
+    # Add event handlers for radio buttons
+    $certificateAuth.Add_Checked({
+            $certificateInputs.Visibility = 'Visible'
+            $secretInputs.Visibility = 'Collapsed'
+        })
+
+    $secretAuth.Add_Checked({
+            $secretInputs.Visibility = 'Visible'
+            $certificateInputs.Visibility = 'Collapsed'
+        })
+
+    $interactiveAuth.Add_Checked({
+            $certificateInputs.Visibility = 'Collapsed'
+            $secretInputs.Visibility = 'Collapsed'
+        })
+
+    # Add event handlers for buttons
+    $cancelAuthButton.Add_Click({
+            $script:authCancelled = $true
+            $authWindow.DialogResult = $false
+            $authWindow.Close()
+        })
+
+    $connectButton.Add_Click({
+            $script:authCancelled = $false
+            $authWindow.DialogResult = $true
+            $authWindow.Close()
+        })
+
+    # Show dialog and return result
+    $result = $authWindow.ShowDialog()
+    
+    if ($result) {
+        # Return authentication details based on selected method
+        if ($interactiveAuth.IsChecked) {
+            return @{
+                Method = 'Interactive'
+            }
+        }
+        elseif ($certificateAuth.IsChecked) {
+            return @{
+                Method     = 'Certificate'
+                AppId      = $authWindow.FindName('CertAppId').Text
+                TenantId   = $authWindow.FindName('CertTenantId').Text
+                Thumbprint = $authWindow.FindName('CertThumbprint').Text
+            }
+        }
+        else {
+            return @{
+                Method   = 'Secret'
+                AppId    = $authWindow.FindName('SecretAppId').Text
+                TenantId = $authWindow.FindName('SecretTenantId').Text
+                Secret   = $authWindow.FindName('ClientSecret').Password
+            }
+        }
+    }
+    return $null
+}
+
+function Connect-ToGraph {
+    param (
+        [Parameter(Mandatory = $true)]
+        [hashtable]$AuthDetails
+    )
+
+    try {
+        Write-Log "Attempting to connect to Microsoft Graph using $($AuthDetails.Method) authentication..."
+        
+        # Get required permissions
+        $permissionsList = ($script:requiredPermissions | ForEach-Object { $_.Permission })
+
+        # Connect based on authentication method
+        switch ($AuthDetails.Method) {
+            'Interactive' {
+                $connectionResult = Connect-MgGraph -Scopes $permissionsList -NoWelcome -ErrorAction Stop
+            }
+            'Certificate' {
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId) -or
+                    [string]::IsNullOrWhiteSpace($AuthDetails.TenantId) -or
+                    [string]::IsNullOrWhiteSpace($AuthDetails.Thumbprint)) {
+                    throw "Certificate authentication requires App ID, Tenant ID, and Certificate Thumbprint"
+                }
+                
+                # Disconnect any existing connections first
+                Disconnect-MgGraph -ErrorAction SilentlyContinue
+                
+                $connectionResult = Connect-MgGraph -ClientId $AuthDetails.AppId -TenantId $AuthDetails.TenantId -CertificateThumbprint $AuthDetails.Thumbprint -NoWelcome -ErrorAction Stop
+                
+                # Verify connection was successful
+                $context = Get-MgContext
+                if (-not $context) {
+                    throw "Failed to establish connection with certificate authentication"
+                }
+            }
+            'Secret' {
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId) -or
+                    [string]::IsNullOrWhiteSpace($AuthDetails.TenantId) -or
+                    [string]::IsNullOrWhiteSpace($AuthDetails.Secret)) {
+                    throw "Secret authentication requires App ID, Tenant ID, and Client Secret"
+                }
+                
+                # Create client secret credential
+                $SecuredPasswordPassword = ConvertTo-SecureString -String $AuthDetails.Secret -AsPlainText -Force
+                
+                $ClientSecretCredential = New-Object -TypeName System.Management.Automation.PSCredential `
+                    -ArgumentList $AuthDetails.AppId, $SecuredPasswordPassword
+                
+                # Get required permissions
+                $permissionsList = ($script:requiredPermissions | ForEach-Object { $_.Permission })
+                
+                $connectionResult = Connect-MgGraph -TenantId $AuthDetails.TenantId `
+                    -ClientSecretCredential $ClientSecretCredential `
+                    -NoWelcome -ErrorAction Stop
+            }
+            default {
+                throw "Invalid authentication method specified"
+            }
+        }
+
+        # Check permissions
+        $context = Get-MgContext
+        if (-not $context) {
+            throw "Failed to get Microsoft Graph context after connection"
+        }
+
+        $currentPermissions = $context.Scopes
+        $missingPermissions = @()
+
+        foreach ($permissionInfo in $script:requiredPermissions) {
+            $permission = $permissionInfo.Permission
+            if (-not ($currentPermissions -contains $permission -or
+                    $currentPermissions -contains $permission.Replace(".Read", ".ReadWrite"))) {
+                $missingPermissions += $permission
+            }
+        }
+
+        if ($missingPermissions.Count -gt 0) {
+            $missingList = $missingPermissions -join ", "
+            Write-Log "Warning: Missing permissions: $missingList"
+            [System.Windows.MessageBox]::Show(
+                "The following permissions are missing: `n$missingList`n`nThe application may not function correctly.",
+                "Missing Permissions",
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning
+            )
+        }
+
+        Write-Log "Successfully connected to Microsoft Graph"
+        
+        # Close any open authentication dialogs
+        $authWindow = [System.Windows.Application]::Current.Windows | Where-Object { $_.Title -eq "Authentication" }
+        if ($authWindow) {
+            $authWindow.Close()
+        }
+        
+        return $true
+    }
+    catch {
+        Write-Log "Failed to connect to Microsoft Graph: $_"
+        [System.Windows.MessageBox]::Show(
+            "Failed to connect to Microsoft Graph: $_",
+            "Connection Error",
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Error
+        )
+        return $false
+    }
+}
+
 # Parse XAML
-$reader = (New-Object System.Xml.XmlNodeReader $xaml) 
+$reader = (New-Object System.Xml.XmlNodeReader $xaml)
 $Window = [Windows.Markup.XamlReader]::Load($reader)
 
 $script:LogFilePath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "IntuneOffboardingTool_Log.txt")
@@ -789,66 +1129,135 @@ $Window.Add_Loaded({
                 $AuthenticateButton.Content = "Connect to MS Graph"
                 $AuthenticateButton.IsEnabled = $true
                 $Disconnect.IsEnabled = $false
+                $CheckPermissionsButton.IsEnabled = $false
             }
             else {
                 Write-Log "Successfully connected to MS Graph"
                 $AuthenticateButton.Content = "Successfully connected"
                 $AuthenticateButton.IsEnabled = $false
                 $Disconnect.IsEnabled = $true
+                $CheckPermissionsButton.IsEnabled = $true
+                
+                # Update dashboard statistics for existing connection
+                Update-DashboardStatistics
+                
+                # Verify permissions for existing connection
+                $currentPermissions = $context.Scopes
+                $missingPermissions = @()
+                
+                foreach ($permissionInfo in $script:requiredPermissions) {
+                    $permission = $permissionInfo.Permission
+                    if (-not ($currentPermissions -contains $permission -or
+                            $currentPermissions -contains $permission.Replace(".Read", ".ReadWrite"))) {
+                        $missingPermissions += $permission
+                    }
+                }
+                
+                if ($missingPermissions.Count -gt 0) {
+                    $missingList = $missingPermissions -join ", "
+                    Write-Log "Warning: Missing permissions for existing connection: $missingList"
+                    [System.Windows.MessageBox]::Show(
+                        "The following permissions are missing: `n$missingList`n`nThe application may not function correctly.",
+                        "Missing Permissions",
+                        [System.Windows.MessageBoxButton]::OK,
+                        [System.Windows.MessageBoxImage]::Warning
+                    )
+                }
             }
         }
         catch {
-            Write-Log "Error occurred: $_"
+            Write-Log "Error occurred during window load: $_"
             $AuthenticateButton.Content = "Not Connected to MS Graph"
             $AuthenticateButton.IsEnabled = $true
+            $Disconnect.IsEnabled = $false
+            $CheckPermissionsButton.IsEnabled = $false
         }
     })
     
 $Disconnect.Add_Click({
         try {
             Write-Log "Attempting to disconnect from MS Graph..."
-            Disconnect-MgGraph
+            
+            # Disconnect from Graph
+            Disconnect-MgGraph -ErrorAction Stop
+            
+            # Reset UI state
             $Disconnect.Content = "Disconnected"
             $Disconnect.IsEnabled = $false
             $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
             $CheckPermissionsButton.IsEnabled = $false
+            
+            # Clear any sensitive data from the dashboard
+            $Window.FindName('IntuneDevicesCount').Text = "0"
+            $Window.FindName('AutopilotDevicesCount').Text = "0"
+            $Window.FindName('EntraIDDevicesCount').Text = "0"
+            $Window.FindName('StaleDevices30Count').Text = "0"
+            $Window.FindName('StaleDevices90Count').Text = "0"
+            $Window.FindName('StaleDevices180Count').Text = "0"
+            $Window.FindName('PersonalDevicesCount').Text = "0"
+            $Window.FindName('CorporateDevicesCount').Text = "0"
+            
+            Write-Log "Successfully disconnected from MS Graph"
         }
         catch {
             Write-Log "Error occurred while attempting to disconnect from MS Graph: $_"
-            [System.Windows.MessageBox]::Show("Error in disconnect operation.")
+            [System.Windows.MessageBox]::Show(
+                "Error disconnecting from Microsoft Graph: $_",
+                "Disconnect Error",
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Error
+            )
         }
     })
     
 $AuthenticateButton.Add_Click({
         try {
-            Connect-MgGraph -Scopes "Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
+            # Check if already connected
             $context = Get-MgContext
-        
-            if ($null -eq $context) {
-                Write-Log "Authentication Failed"
-                $AuthenticateButton.Content = "Authentication Failed"
-                $AuthenticateButton.IsEnabled = $true
-                $Disconnect.Content = "Disconnected"  
-                $Disconnect.IsEnabled = $false  
-                $CheckPermissionsButton.IsEnabled = $false  
+            if ($context) {
+                Write-Log "Already connected to MS Graph, skipping authentication dialog"
+                return
             }
-            else {
+            
+            Write-Log "Authentication button clicked, showing authentication dialog..."
+        
+            # Show authentication dialog
+            $authDetails = Show-AuthenticationDialog
+            if (-not $authDetails) {
+                Write-Log "Authentication cancelled by user"
+                return
+            }
+
+            # Attempt to connect
+            $connected = Connect-ToGraph -AuthDetails $authDetails
+            if ($connected) {
                 Write-Log "Authentication Successful"
                 $AuthenticateButton.Content = "Authentication Successful"
                 $AuthenticateButton.IsEnabled = $false
-                $Disconnect.Content = "Disconnect"  
-                $Disconnect.IsEnabled = $true  
-                $CheckPermissionsButton.IsEnabled = $true  
+                $Disconnect.Content = "Disconnect"
+                $Disconnect.IsEnabled = $true
+                $CheckPermissionsButton.IsEnabled = $true
+
+                # Update dashboard statistics after successful authentication
+                Update-DashboardStatistics
+            }
+            else {
+                Write-Log "Authentication Failed"
+                $AuthenticateButton.Content = "Authentication Failed"
+                $AuthenticateButton.IsEnabled = $true
+                $Disconnect.Content = "Disconnected"
+                $Disconnect.IsEnabled = $false
+                $CheckPermissionsButton.IsEnabled = $false
             }
         }
         catch {
             Write-Log "Error occurred during authentication. Exception: $_"
             $AuthenticateButton.Content = "Authentication Failed"
             $AuthenticateButton.IsEnabled = $true
-            $Disconnect.Content = "Disconnected"  
-            $Disconnect.IsEnabled = $false  
-            $CheckPermissionsButton.IsEnabled = $false  
+            $Disconnect.Content = "Disconnected"
+            $Disconnect.IsEnabled = $false
+            $CheckPermissionsButton.IsEnabled = $false
         }
     })
     
@@ -1350,42 +1759,6 @@ $SearchResultsDataGrid.Add_LoadingRow({
                         $OffboardButton.IsEnabled = ($null -ne $selectedDevices -and $selectedDevices.Count -gt 0)
                     }
                 })
-        }
-    })
-
-# Add dashboard refresh on authentication
-$AuthenticateButton.Add_Click({
-        try {
-            Connect-MgGraph -Scopes "Device.Read.All, DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All" -ErrorAction Stop
-            $context = Get-MgContext
-        
-            if ($null -eq $context) {
-                Write-Log "Authentication Failed"
-                $AuthenticateButton.Content = "Authentication Failed"
-                $AuthenticateButton.IsEnabled = $true
-                $Disconnect.Content = "Disconnected"  
-                $Disconnect.IsEnabled = $false  
-                $CheckPermissionsButton.IsEnabled = $false  
-            }
-            else {
-                Write-Log "Authentication Successful"
-                $AuthenticateButton.Content = "Authentication Successful"
-                $AuthenticateButton.IsEnabled = $false
-                $Disconnect.Content = "Disconnect"  
-                $Disconnect.IsEnabled = $true  
-                $CheckPermissionsButton.IsEnabled = $true
-                
-                # Update dashboard statistics after successful authentication
-                Update-DashboardStatistics
-            }
-        }
-        catch {
-            Write-Log "Error occurred during authentication. Exception: $_"
-            $AuthenticateButton.Content = "Authentication Failed"
-            $AuthenticateButton.IsEnabled = $true
-            $Disconnect.Content = "Disconnected"  
-            $Disconnect.IsEnabled = $false  
-            $CheckPermissionsButton.IsEnabled = $false  
         }
     })
 
