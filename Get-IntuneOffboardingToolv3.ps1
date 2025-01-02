@@ -76,6 +76,14 @@ function Get-GraphPagedResults {
     ResizeMode="NoResize">
     
     <Window.Resources>
+        <!-- Drop Shadow Effect -->
+        <DropShadowEffect x:Key="CardShadow"
+                         ShadowDepth="2"
+                         Direction="315"
+                         Color="#000000"
+                         Opacity="0.25"
+                         BlurRadius="4"/>
+                         
         <!-- Base Button Style -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="#0078D4"/>
@@ -591,106 +599,214 @@ function Get-GraphPagedResults {
 
                 <!-- Top Row Statistics -->
                 <UniformGrid Grid.Row="1" Rows="1" Margin="0,0,0,20">
-                    <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Number of Devices in Intune" 
-                                     Foreground="#8B95A5" 
-                                     FontSize="14"/>
-                            <TextBlock x:Name="IntuneDevicesCount"
+                    <Border Background="#1A365D" Margin="0,0,10,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M21,14V4H3V14H21M21,2A2,2 0 0,1 23,4V16A2,2 0 0,1 21,18H14L16,21V22H8V21L10,18H3C1.89,18 1,17.1 1,16V4C1,2.89 1.89,2 3,2H21M4,5H20V13H4V5Z"
+                                      Fill="#4299E1" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="Intune Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="IntuneDevicesCount"
                                      Text="0"
                                      Foreground="White"
-                                     FontSize="32"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Total Devices"
-                                     Foreground="#8B95A5"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Total Managed Devices"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                        </Grid>
                     </Border>
 
-                    <Border Background="#2D3A4F" Margin="10,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Number of Devices in Autopilot"
-                                     Foreground="#8B95A5"
-                                     FontSize="14"/>
-                            <TextBlock x:Name="AutopilotDevicesCount"
+                    <Border Background="#1A365D" Margin="10,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"
+                                      Fill="#48BB78" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="Autopilot Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="AutopilotDevicesCount"
                                      Text="0"
                                      Foreground="White"
-                                     FontSize="32"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Total Devices"
-                                     Foreground="#8B95A5"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Total Registered Devices"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                        </Grid>
                     </Border>
 
-                    <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Number of Devices in EntraID"
-                                     Foreground="#8B95A5"
-                                     FontSize="14"/>
-                            <TextBlock x:Name="EntraIDDevicesCount"
+                    <Border Background="#1A365D" Margin="10,0,0,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z"
+                                      Fill="#ED64A6" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="EntraID Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="EntraIDDevicesCount"
                                      Text="0"
                                      Foreground="White"
-                                     FontSize="32"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Total Devices"
-                                     Foreground="#8B95A5"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Total Azure AD Devices"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                        </Grid>
                     </Border>
                 </UniformGrid>
 
                 <!-- Middle Row - Stale Devices -->
                 <UniformGrid Grid.Row="2" Rows="1" Margin="0,0,0,20">
-                    <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Stale Devices (30 days)"
-                                     Foreground="#8B95A5"
-                                     FontSize="14"/>
-                            <TextBlock x:Name="StaleDevices30Count"
+                    <Border Background="#1A365D" Margin="0,0,10,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.75,16.85L16.5,15.62L12.5,13.25V8M7.88,3.39L6.6,1.86L2,5.71L3.29,7.24L7.88,3.39M22,5.72L17.4,1.86L16.11,3.39L20.71,7.25L22,5.72Z"
+                                      Fill="#F6AD55" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="30 Day Stale Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="StaleDevices30Count"
                                      Text="0"
-                                     Foreground="White"
-                                     FontSize="32"
+                                     Foreground="#F6AD55"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Did not Sync with Intune in the last 30 days"
-                                     Foreground="#8B95A5"
-                                     TextWrapping="Wrap"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Devices Not Synced"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                            <ProgressBar Grid.Row="3"
+                                       Height="4"
+                                       Margin="0,12,0,0"
+                                       Background="#2D3748"
+                                       Foreground="#F6AD55"
+                                       Value="30"/>
+                        </Grid>
                     </Border>
 
-                    <Border Background="#2D3A4F" Margin="10,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Stale Devices (90 days)"
-                                     Foreground="#8B95A5"
-                                     FontSize="14"/>
-                            <TextBlock x:Name="StaleDevices90Count"
+                    <Border Background="#1A365D" Margin="10,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.75,16.85L16.5,15.62L12.5,13.25V8M7.88,3.39L6.6,1.86L2,5.71L3.29,7.24L7.88,3.39M22,5.72L17.4,1.86L16.11,3.39L20.71,7.25L22,5.72Z"
+                                      Fill="#FC8181" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="90 Day Stale Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="StaleDevices90Count"
                                      Text="0"
-                                     Foreground="White"
-                                     FontSize="32"
+                                     Foreground="#FC8181"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Did not Sync with Intune in the last 90 days"
-                                     Foreground="#8B95A5"
-                                     TextWrapping="Wrap"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Devices Not Synced"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                            <ProgressBar Grid.Row="3"
+                                       Height="4"
+                                       Margin="0,12,0,0"
+                                       Background="#2D3748"
+                                       Foreground="#FC8181"
+                                       Value="60"/>
+                        </Grid>
                     </Border>
 
-                    <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
-                        <StackPanel Margin="20">
-                            <TextBlock Text="Stale Devices (180 days)"
-                                     Foreground="#8B95A5"
-                                     FontSize="14"/>
-                            <TextBlock x:Name="StaleDevices180Count"
+                    <Border Background="#1A365D" Margin="10,0,0,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                        <Grid Margin="24">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                <Path Data="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.75,16.85L16.5,15.62L12.5,13.25V8M7.88,3.39L6.6,1.86L2,5.71L3.29,7.24L7.88,3.39M22,5.72L17.4,1.86L16.11,3.39L20.71,7.25L22,5.72Z"
+                                      Fill="#F56565" Width="24" Height="24" Stretch="Uniform"/>
+                                <TextBlock Text="180 Day Stale Devices"
+                                         Foreground="#A0AEC0"
+                                         FontSize="16"
+                                         FontWeight="SemiBold"
+                                         Margin="12,0,0,0"
+                                         VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Grid.Row="1"
+                                     x:Name="StaleDevices180Count"
                                      Text="0"
-                                     Foreground="White"
-                                     FontSize="32"
+                                     Foreground="#F56565"
+                                     FontSize="36"
                                      FontWeight="Bold"
-                                     Margin="0,10,0,5"/>
-                            <TextBlock Text="Did not Sync with Intune in the last 180 days"
-                                     Foreground="#8B95A5"
-                                     TextWrapping="Wrap"/>
-                        </StackPanel>
+                                     Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2"
+                                     Text="Devices Not Synced"
+                                     Foreground="#718096"
+                                     FontSize="14"/>
+                            <ProgressBar Grid.Row="3"
+                                       Height="4"
+                                       Margin="0,12,0,0"
+                                       Background="#2D3748"
+                                       Foreground="#F56565"
+                                       Value="90"/>
+                        </Grid>
                     </Border>
                 </UniformGrid>
 
@@ -703,36 +819,82 @@ function Get-GraphPagedResults {
 
                     <!-- Personal/Corporate Devices -->
                     <UniformGrid Grid.Column="0" Rows="1" Margin="0,0,10,0">
-                        <Border Background="#2D3A4F" Margin="0,0,10,0" CornerRadius="8">
-                            <StackPanel Margin="20">
-                                <TextBlock Text="Number of Personal Devices in Intune"
-                                         Foreground="#8B95A5"
-                                         FontSize="14"/>
-                                <TextBlock x:Name="PersonalDevicesCount"
+                        <Border Background="#1A365D" Margin="0,0,10,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                            <Grid Margin="24">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+                                          Fill="#9F7AEA" Width="24" Height="24" Stretch="Uniform"/>
+                                    <TextBlock Text="Personal Devices"
+                                             Foreground="#A0AEC0"
+                                             FontSize="16"
+                                             FontWeight="SemiBold"
+                                             Margin="12,0,0,0"
+                                             VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1"
+                                         x:Name="PersonalDevicesCount"
                                          Text="0"
-                                         Foreground="White"
-                                         FontSize="32"
+                                         Foreground="#9F7AEA"
+                                         FontSize="36"
                                          FontWeight="Bold"
-                                         Margin="0,10,0,5"/>
-                                <TextBlock Text="Total personal devices"
-                                         Foreground="#8B95A5"/>
-                            </StackPanel>
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="2"
+                                         Text="BYOD Devices in Intune"
+                                         Foreground="#718096"
+                                         FontSize="14"/>
+                                <ProgressBar x:Name="PersonalDevicesProgress"
+                                            Grid.Row="3"
+                                            Height="4"
+                                            Margin="0,12,0,0"
+                                            Background="#2D3748"
+                                            Foreground="#9F7AEA"
+                                            Value="0"/>
+                            </Grid>
                         </Border>
 
-                        <Border Background="#2D3A4F" Margin="10,0,0,0" CornerRadius="8">
-                            <StackPanel Margin="20">
-                                <TextBlock Text="Number of Corporate Devices in Intune"
-                                         Foreground="#8B95A5"
-                                         FontSize="14"/>
-                                <TextBlock x:Name="CorporateDevicesCount"
+                        <Border Background="#1A365D" Margin="10,0,0,0" CornerRadius="12" Effect="{StaticResource CardShadow}">
+                            <Grid Margin="24">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Path Data="M18,15H16V17H18M18,11H16V13H18M20,19H12V17H14V15H12V13H14V11H12V9H20M10,7H8V5H10M10,11H8V9H10M10,15H8V13H10M10,19H8V17H10M6,7H4V5H6M6,11H4V9H6M6,15H4V13H6M6,19H4V17H6M12,7V3H2V21H22V7H12Z"
+                                          Fill="#4FD1C5" Width="24" Height="24" Stretch="Uniform"/>
+                                    <TextBlock Text="Corporate Devices"
+                                             Foreground="#A0AEC0"
+                                             FontSize="16"
+                                             FontWeight="SemiBold"
+                                             Margin="12,0,0,0"
+                                             VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Grid.Row="1"
+                                         x:Name="CorporateDevicesCount"
                                          Text="0"
-                                         Foreground="White"
-                                         FontSize="32"
+                                         Foreground="#4FD1C5"
+                                         FontSize="36"
                                          FontWeight="Bold"
-                                         Margin="0,10,0,5"/>
-                                <TextBlock Text="Total corporate devices"
-                                         Foreground="#8B95A5"/>
-                            </StackPanel>
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="2"
+                                         Text="Company Devices in Intune"
+                                         Foreground="#718096"
+                                         FontSize="14"/>
+                                <ProgressBar x:Name="CorporateDevicesProgress"
+                                            Grid.Row="3"
+                                            Height="4"
+                                            Margin="0,12,0,0"
+                                            Background="#2D3748"
+                                            Foreground="#4FD1C5"
+                                            Value="0"/>
+                            </Grid>
                         </Border>
                     </UniformGrid>
 
@@ -744,25 +906,65 @@ function Get-GraphPagedResults {
                         </Grid.RowDefinitions>
 
                         <!-- Platform Distribution Chart -->
-                        <Border Grid.Row="0" Background="#2D3A4F" CornerRadius="8" Margin="0,0,0,10">
-                            <StackPanel Margin="20">
-                                <TextBlock Text="Number of Devices per Platform (Intune)"
-                                         Foreground="#8B95A5"
-                                         FontSize="14"
-                                         Margin="0,0,0,10"/>
-                                <!-- Add chart here -->
-                            </StackPanel>
+                        <Border Grid.Row="0" Background="#1A365D" CornerRadius="12" Effect="{StaticResource CardShadow}" Margin="0,0,0,10">
+                            <Grid Margin="24">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Path Data="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z"
+                                          Fill="#4299E1" Width="24" Height="24" Stretch="Uniform"/>
+                                    <TextBlock Text="Platform Distribution"
+                                             Foreground="#A0AEC0"
+                                             FontSize="16"
+                                             FontWeight="SemiBold"
+                                             Margin="12,0,0,0"
+                                             VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Border Grid.Row="1"
+                                        Background="#141E33"
+                                        CornerRadius="8"
+                                        Margin="0,8,0,0"
+                                        MinHeight="120">
+                                    <TextBlock Text="Platform distribution visualization will be implemented here"
+                                             Foreground="#718096"
+                                             FontSize="14"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <!-- OS Versions Chart -->
-                        <Border Grid.Row="1" Background="#2D3A4F" CornerRadius="8" Margin="0,10,0,0">
-                            <StackPanel Margin="20">
-                                <TextBlock Text="OS Versions (Intune)"
-                                         Foreground="#8B95A5"
-                                         FontSize="14"
-                                         Margin="0,0,0,10"/>
-                                <!-- Add chart here -->
-                            </StackPanel>
+                        <Border Grid.Row="1" Background="#1A365D" CornerRadius="12" Effect="{StaticResource CardShadow}" Margin="0,10,0,0">
+                            <Grid Margin="24">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Path Data="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22A9,9 0 0,0 21,13A9,9 0 0,0 12,4M12.5,8H11V14L15.75,16.85L16.5,15.62L12.5,13.25V8M7.88,3.39L6.6,1.86L2,5.71L3.29,7.24L7.88,3.39M22,5.72L17.4,1.86L16.11,3.39L20.71,7.25L22,5.72Z"
+                                          Fill="#F6AD55" Width="24" Height="24" Stretch="Uniform"/>
+                                    <TextBlock Text="OS Version History"
+                                             Foreground="#A0AEC0"
+                                             FontSize="16"
+                                             FontWeight="SemiBold"
+                                             Margin="12,0,0,0"
+                                             VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Border Grid.Row="1"
+                                        Background="#141E33"
+                                        CornerRadius="8"
+                                        Margin="0,8,0,0"
+                                        MinHeight="120">
+                                    <TextBlock Text="OS version distribution visualization will be implemented here"
+                                             Foreground="#718096"
+                                             FontSize="14"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Grid>
@@ -2245,12 +2447,42 @@ function Update-DashboardStatistics {
         $Window.FindName('StaleDevices90Count').Text = $stale90
         $Window.FindName('StaleDevices180Count').Text = $stale180
 
-        # Update personal/corporate counts
-        $personalDevices = ($intuneDevices | Where-Object { $_.managementState -eq 'userEnrollment' }).Count
-        $corporateDevices = ($intuneDevices | Where-Object { $_.managementState -eq 'managed' }).Count
+        # Update personal/corporate counts and progress bars
+        $personalDevices = ($intuneDevices | Where-Object  { $_.managedDeviceOwnerType -eq 'personal' }).Count
+        $corporateDevices = ($intuneDevices | Where-Object { $_.managedDeviceOwnerType -eq 'company' }).Count
+        $totalDevices = if ($intuneDevices) { $intuneDevices.Count } else { 0 }
 
+        # Update counts
         $Window.FindName('PersonalDevicesCount').Text = $personalDevices
         $Window.FindName('CorporateDevicesCount').Text = $corporateDevices
+
+        # Update progress bars
+        if ($totalDevices -gt 0) {
+            $personalProgress = [Math]::Round(($personalDevices / $totalDevices) * 100)
+            $corporateProgress = [Math]::Round(($corporateDevices / $totalDevices) * 100)
+            
+            $Window.FindName('PersonalDevicesProgress').Value = $personalProgress
+            $Window.FindName('CorporateDevicesProgress').Value = $corporateProgress
+        }
+
+        # Group platform distribution
+        $platformGroups = $intuneDevices | Group-Object -Property { 
+            if ($_.operatingSystem -like "Linux*") { "Linux" } else { $_.operatingSystem } 
+        }
+
+        $platformDistribution = $platformGroups | ForEach-Object {
+            @{
+                Platform = if ([string]::IsNullOrEmpty($_.Name)) { "Unknown" } else { $_.Name }
+                Count = $_.Count
+                Percentage = if ($totalDevices -gt 0) { [Math]::Round(($_.Count / $totalDevices) * 100) } else { 0 }
+            }
+        }
+
+        # Log platform distribution for visualization
+        Write-Log "Platform Distribution:"
+        foreach ($platform in $platformDistribution) {
+            Write-Log "$($platform.Platform): $($platform.Count) devices ($($platform.Percentage)%)"
+        }
 
         Write-Log "Dashboard statistics updated successfully."
     }
