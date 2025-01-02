@@ -485,13 +485,8 @@ function Get-GraphPagedResults {
                         </StackPanel>
                     </Border>
 
-                    <Button x:Name="CheckPermissionsButton" 
-                            Content="Check Permissions" 
-                            Style="{StaticResource SidebarButtonStyle}"
-                            IsEnabled="False"
-                            Margin="15,5"/>
-                    <Button x:Name="InstallModulesButton" 
-                            Content="Install/Update Modules"
+                    <Button x:Name="PrerequisitesButton"
+                            Content="Prerequisites"
                             Style="{StaticResource SidebarButtonStyle}"
                             Margin="15,5"/>
                     <Button x:Name="logs_button" 
@@ -1218,6 +1213,96 @@ function Get-GraphPagedResults {
 </Window>
 "@
 
+# Define Prerequisites Modal XAML
+[xml]$prerequisitesModalXaml = @"
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Prerequisites Check" Height="500" Width="600"
+    WindowStartupLocation="CenterScreen"
+    Background="#F8F9FA">
+    
+    <Window.Resources>
+        <Style x:Key="CheckItemStyle" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,8,0,8"/>
+        </Style>
+        
+        <Style x:Key="CheckTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        
+        <Style x:Key="InstallButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="8,0,0,0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="White"
+            CornerRadius="8"
+            Margin="16">
+        <DockPanel Margin="24">
+            <!-- Header -->
+            <StackPanel DockPanel.Dock="Top"
+                       Margin="0,0,0,24">
+                <TextBlock Text="Prerequisites Check"
+                          FontSize="24"
+                          FontWeight="SemiBold"
+                          Foreground="#1A202C"/>
+                <TextBlock Text="Checking required permissions and modules"
+                          Foreground="#4A5568"
+                          FontSize="14"
+                          Margin="0,8,0,0"/>
+            </StackPanel>
+
+            <!-- Action Buttons -->
+            <StackPanel DockPanel.Dock="Bottom"
+                       Orientation="Horizontal"
+                       HorizontalAlignment="Right"
+                       Margin="0,24,0,0">
+                <Button x:Name="ClosePrereqButton"
+                        Content="Close"
+                        Width="120"
+                        Height="40"
+                        Background="#F0F0F0"
+                        Foreground="#2D3748"
+                        BorderThickness="0"/>
+            </StackPanel>
+
+            <!-- Scrollable Content -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <!-- API Permissions Section -->
+                    <TextBlock Text="API Permissions"
+                             FontSize="18"
+                             FontWeight="SemiBold"
+                             Margin="0,0,0,16"/>
+                             
+                    <StackPanel x:Name="PermissionsPanel">
+                        <!-- Permissions will be added here dynamically -->
+                    </StackPanel>
+
+                    <!-- Module Section -->
+                    <TextBlock Text="Required Modules"
+                             FontSize="18"
+                             FontWeight="SemiBold"
+                             Margin="0,24,0,16"/>
+                             
+                    <StackPanel x:Name="ModulePanel">
+                        <!-- Module check will be added here dynamically -->
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>
+"@
+
 # Define Authentication Modal XAML
 [xml]$authModalXaml = @"
 <Window 
@@ -1869,12 +1954,11 @@ $SearchButton = $Window.FindName("SearchButton")
 $OffboardButton = $Window.FindName("OffboardButton")
 $AuthenticateButton = $Window.FindName("AuthenticateButton")
 $SearchInputText = $Window.FindName("SearchInputText")
-$InstallModulesButton = $Window.FindName("InstallModulesButton")
 $bulk_import_button = $Window.FindName('bulk_import_button')
 $Dropdown = $Window.FindName("dropdown")
 $Disconnect = $Window.FindName('disconnect_button')
 $logs_button = $Window.FindName('logs_button')
-$CheckPermissionsButton = $Window.FindName('CheckPermissionsButton')
+$PrerequisitesButton = $Window.FindName('PrerequisitesButton')
 
 $SearchInputText.Add_GotFocus({
         # Empty - no resizing needed
@@ -1901,7 +1985,7 @@ $Window.Add_Loaded({
                 $AuthenticateButton.Content = "Connect to MS Graph"
                 $AuthenticateButton.IsEnabled = $true
                 $Disconnect.IsEnabled = $false
-                $CheckPermissionsButton.IsEnabled = $false
+                $PrerequisitesButton.IsEnabled = $true
                 
                 # Disable navigation menus
                 $MenuDashboard.IsEnabled = $false
@@ -1916,12 +2000,31 @@ $Window.Add_Loaded({
                 $AuthenticateButton.Content = "Successfully connected"
                 $AuthenticateButton.IsEnabled = $false
                 $Disconnect.IsEnabled = $true
-                $CheckPermissionsButton.IsEnabled = $true
+                $PrerequisitesButton.IsEnabled = $true
                 
                 # Enable navigation menus
                 $MenuDashboard.IsEnabled = $true
                 $MenuDeviceManagement.IsEnabled = $true
                 $MenuPlaybooks.IsEnabled = $true
+                
+                # Get tenant details for existing connection
+                try {
+                    Write-Log "Retrieving tenant information for existing connection..."
+                    $tenantInfo = Invoke-MgGraphRequest -Uri "https://graph.microsoft.com/v1.0/organization" -Method GET
+                    if ($tenantInfo.value) {
+                        $org = $tenantInfo.value[0]
+                        Write-Log "Found tenant: $($org.displayName)"
+                        
+                        # Update UI elements
+                        $Window.FindName('TenantDisplayName').Text = $org.displayName
+                        $Window.FindName('TenantId').Text = $org.id
+                        $Window.FindName('TenantDomain').Text = $org.verifiedDomains[0].name
+                        $Window.FindName('TenantInfoSection').Visibility = 'Visible'
+                    }
+                }
+                catch {
+                    Write-Log "Warning: Could not retrieve tenant details for existing connection: $_"
+                }
                 
                 # Update dashboard statistics for existing connection
                 Update-DashboardStatistics
@@ -1955,7 +2058,7 @@ $Window.Add_Loaded({
             $AuthenticateButton.Content = "Not Connected to MS Graph"
             $AuthenticateButton.IsEnabled = $true
             $Disconnect.IsEnabled = $false
-            $CheckPermissionsButton.IsEnabled = $false
+            $PrerequisitesButton.IsEnabled = $true
             
             # Disable navigation menus
             $MenuDashboard.IsEnabled = $false
@@ -1976,7 +2079,7 @@ $Disconnect.Add_Click({
             $Disconnect.IsEnabled = $false
             $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
-            $CheckPermissionsButton.IsEnabled = $false
+            $PrerequisitesButton.IsEnabled = $true
             
             # Hide tenant info
             $Window.FindName('TenantInfoSection').Visibility = 'Collapsed'
@@ -2401,6 +2504,196 @@ $OffboardButton.Add_Click({
         }
     })
     
+
+function Show-PrerequisitesDialog {
+    $reader = (New-Object System.Xml.XmlNodeReader $prerequisitesModalXaml)
+    $prereqWindow = [Windows.Markup.XamlReader]::Load($reader)
+
+    # Get controls
+    $permissionsPanel = $prereqWindow.FindName('PermissionsPanel')
+    $modulePanel = $prereqWindow.FindName('ModulePanel')
+    $closeButton = $prereqWindow.FindName('ClosePrereqButton')
+
+    # Add required permissions with checkboxes
+    $requiredPermissions = @(
+        @{
+            Name = "Device.Read.All"
+            Description = "Read all device properties from Entra ID"
+        },
+        @{
+            Name = "DeviceManagementApps.Read.All"
+            Description = "Read mobile app management policies and configurations"
+        },
+        @{
+            Name = "DeviceManagementConfiguration.Read.All"
+            Description = "Read device configuration policies and assignments"
+        },
+        @{
+            Name = "DeviceManagementManagedDevices.ReadWrite.All"
+            Description = "Read and modify managed device information and compliance policies"
+        },
+        @{
+            Name = "DeviceManagementServiceConfig.ReadWrite.All"
+            Description = "Read and modify Autopilot deployment profiles"
+        },
+        @{
+            Name = "Group.Read.All"
+            Description = "Read group information and memberships"
+        },
+        @{
+            Name = "User.Read.All"
+            Description = "Read user profile information and check group memberships"
+        }
+    )
+
+    $context = Get-MgContext
+    $currentPermissions = if ($context) { $context.Scopes } else { @() }
+
+    foreach ($permission in $requiredPermissions) {
+        $permItem = New-Object System.Windows.Controls.StackPanel
+        $permItem.Style = $prereqWindow.FindResource("CheckItemStyle")
+        $permItem.Orientation = "Horizontal"
+
+        $checkbox = New-Object System.Windows.Controls.CheckBox
+        $checkbox.IsEnabled = $false
+        $checkbox.VerticalAlignment = "Center"
+        $checkbox.Margin = New-Object System.Windows.Thickness(0, 0, 8, 0)
+
+        if ($currentPermissions -contains $permission.Name -or
+            $currentPermissions -contains $permission.Name.Replace(".Read", ".ReadWrite")) {
+            $checkbox.IsChecked = $true
+            $checkbox.Foreground = "#28A745"
+        } else {
+            $checkbox.IsChecked = $false
+            $checkbox.Foreground = "#DC3545"
+        }
+
+        # Create a StackPanel for permission text and description
+        $textPanel = New-Object System.Windows.Controls.StackPanel
+        $textPanel.Orientation = "Vertical"
+        $textPanel.Margin = New-Object System.Windows.Thickness(0, 0, 0, 4)
+
+        # Permission name
+        $permText = New-Object System.Windows.Controls.TextBlock
+        $permText.Text = $permission.Name
+        $permText.Style = $prereqWindow.FindResource("CheckTextStyle")
+        $permText.FontWeight = "SemiBold"
+
+        # Permission description
+        $descText = New-Object System.Windows.Controls.TextBlock
+        $descText.Text = $permission.Description
+        $descText.Style = $prereqWindow.FindResource("CheckTextStyle")
+        $descText.Foreground = "#666666"
+        $descText.FontSize = 12
+        $descText.TextWrapping = "Wrap"
+        $descText.Margin = New-Object System.Windows.Thickness(0, 2, 0, 0)
+
+        $textPanel.Children.Add($permText)
+        $textPanel.Children.Add($descText)
+
+        $permItem.Children.Add($checkbox)
+        $permItem.Children.Add($textPanel)
+        $permissionsPanel.Children.Add($permItem)
+    }
+
+    # Add module check
+    $moduleItem = New-Object System.Windows.Controls.StackPanel
+    $moduleItem.Style = $prereqWindow.FindResource("CheckItemStyle")
+    $moduleItem.Orientation = "Horizontal"
+
+    $moduleCheckbox = New-Object System.Windows.Controls.CheckBox
+    $moduleCheckbox.IsEnabled = $false
+    $moduleCheckbox.VerticalAlignment = "Center"
+    $moduleCheckbox.Margin = New-Object System.Windows.Thickness(0, 0, 8, 0)
+
+    # Create a StackPanel for module text and description
+    $textPanel = New-Object System.Windows.Controls.StackPanel
+    $textPanel.Orientation = "Vertical"
+    $textPanel.Margin = New-Object System.Windows.Thickness(0, 0, 0, 4)
+
+    # Module name
+    $moduleText = New-Object System.Windows.Controls.TextBlock
+    $moduleText.Text = "Microsoft.Graph.Authentication"
+    $moduleText.Style = $prereqWindow.FindResource("CheckTextStyle")
+    $moduleText.FontWeight = "SemiBold"
+
+    # Module description
+    $descText = New-Object System.Windows.Controls.TextBlock
+    $descText.Text = "Required for Microsoft Graph API authentication and operations"
+    $descText.Style = $prereqWindow.FindResource("CheckTextStyle")
+    $descText.Foreground = "#666666"
+    $descText.FontSize = 12
+    $descText.TextWrapping = "Wrap"
+    $descText.Margin = New-Object System.Windows.Thickness(0, 2, 0, 0)
+
+    $textPanel.Children.Add($moduleText)
+    $textPanel.Children.Add($descText)
+
+    $installButton = New-Object System.Windows.Controls.Button
+    $installButton.Content = "Install"
+    $installButton.Style = $prereqWindow.FindResource("InstallButtonStyle")
+    $installButton.Visibility = "Collapsed"
+    $installButton.Margin = New-Object System.Windows.Thickness(8, 0, 0, 0)
+
+    if (Get-Module -ListAvailable -Name "Microsoft.Graph.Authentication") {
+        $moduleCheckbox.IsChecked = $true
+        $moduleCheckbox.Foreground = "#28A745"
+    } else {
+        $moduleCheckbox.IsChecked = $false
+        $moduleCheckbox.Foreground = "#DC3545"
+        $installButton.Visibility = "Visible"
+    }
+
+    $moduleItem.Children.Add($moduleCheckbox)
+    $moduleItem.Children.Add($textPanel)
+    $moduleItem.Children.Add($installButton)
+    $modulePanel.Children.Add($moduleItem)
+
+    # Add install button click handler
+    $installButton.Add_Click({
+        try {
+            $installButton.IsEnabled = $false
+            $installButton.Content = "Installing..."
+
+            Install-Module "Microsoft.Graph.Authentication" -Scope CurrentUser -Force
+            
+            $moduleCheckbox.IsChecked = $true
+            $moduleCheckbox.Foreground = "#28A745"
+            $installButton.Visibility = "Collapsed"
+
+            # Restart required message
+            [System.Windows.MessageBox]::Show(
+                "Module installed successfully. Please restart the application for changes to take effect.",
+                "Installation Complete",
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Information
+            )
+        }
+        catch {
+            Write-Log "Error installing module: $_"
+            [System.Windows.MessageBox]::Show(
+                "Failed to install module. Please ensure you have internet connection and necessary permissions.",
+                "Installation Error",
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Error
+            )
+            $installButton.IsEnabled = $true
+            $installButton.Content = "Install"
+        }
+    })
+
+    # Add close button handler
+    $closeButton.Add_Click({
+        $prereqWindow.Close()
+    })
+
+    # Show dialog
+    $prereqWindow.ShowDialog()
+}
+
+$PrerequisitesButton.Add_Click({
+    Show-PrerequisitesDialog
+})
 
 $logs_button.Add_Click({
         $logFilePath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "IntuneOffboardingTool_Log.txt")
