@@ -493,11 +493,15 @@ function Get-GraphPagedResults {
                             Content="Logs"
                             Style="{StaticResource SidebarButtonStyle}"
                             Margin="15,5"/>
-                    <Button x:Name="disconnect_button" 
+                    <Button x:Name="disconnect_button"
                             Content="Disconnect"
                             Style="{StaticResource SidebarButtonStyle}"
                             IsEnabled="False"
                             Margin="15,5"/>
+                    <Button x:Name="changelog_button"
+                            Content="Changelog"
+                            Style="{StaticResource SidebarButtonStyle}"
+                            Margin="15,5,15,15"/>
                 </StackPanel>
                 
                 <!-- Navigation Menu -->
@@ -1213,6 +1217,65 @@ function Get-GraphPagedResults {
 </Window>
 "@
 
+# Define Changelog Modal XAML
+[xml]$changelogModalXaml = @"
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Changelog" Height="600" Width="800"
+    WindowStartupLocation="CenterScreen"
+    Background="#F8F9FA">
+    
+    <Border Background="White"
+            CornerRadius="8"
+            Margin="16">
+        <DockPanel Margin="24">
+            <!-- Header -->
+            <StackPanel DockPanel.Dock="Top"
+                       Margin="0,0,0,24">
+                <TextBlock Text="Changelog"
+                          FontSize="24"
+                          FontWeight="SemiBold"
+                          Foreground="#1A202C"/>
+            </StackPanel>
+
+            <!-- Close Button -->
+            <Button x:Name="CloseChangelogButton"
+                    DockPanel.Dock="Bottom"
+                    Content="Close"
+                    Width="120"
+                    Height="40"
+                    Background="#F0F0F0"
+                    Foreground="#2D3748"
+                    BorderThickness="0"
+                    HorizontalAlignment="Right"
+                    Margin="0,24,0,0"/>
+
+            <!-- Changelog Content -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto">
+                <RichTextBox x:Name="ChangelogContent"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            IsReadOnly="True"
+                            Margin="20"
+                            Width="Auto">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0,0,0,10"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                    <RichTextBox.Document>
+                        <FlowDocument PageWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+                        </FlowDocument>
+                    </RichTextBox.Document>
+                </RichTextBox>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>
+"@
+
 # Define Prerequisites Modal XAML
 [xml]$prerequisitesModalXaml = @"
 <Window
@@ -1784,6 +1847,34 @@ function Show-AuthenticationDialog {
         })
 
     $connectButton.Add_Click({
+            # Validate fields based on selected authentication method
+            if ($certificateAuth.IsChecked) {
+                if ([string]::IsNullOrWhiteSpace($authWindow.FindName('CertAppId').Text) -or
+                    [string]::IsNullOrWhiteSpace($authWindow.FindName('CertTenantId').Text) -or
+                    [string]::IsNullOrWhiteSpace($authWindow.FindName('CertThumbprint').Text)) {
+                    [System.Windows.MessageBox]::Show(
+                        "Please fill in all required fields for certificate authentication.",
+                        "Validation Error",
+                        [System.Windows.MessageBoxButton]::OK,
+                        [System.Windows.MessageBoxImage]::Warning
+                    )
+                    return
+                }
+            }
+            elseif ($secretAuth.IsChecked) {
+                if ([string]::IsNullOrWhiteSpace($authWindow.FindName('SecretAppId').Text) -or
+                    [string]::IsNullOrWhiteSpace($authWindow.FindName('SecretTenantId').Text) -or
+                    [string]::IsNullOrWhiteSpace($authWindow.FindName('ClientSecret').Password)) {
+                    [System.Windows.MessageBox]::Show(
+                        "Please fill in all required fields for client secret authentication.",
+                        "Validation Error",
+                        [System.Windows.MessageBoxButton]::OK,
+                        [System.Windows.MessageBoxImage]::Warning
+                    )
+                    return
+                }
+            }
+
             $script:authCancelled = $false
             $authWindow.DialogResult = $true
             $authWindow.Close()
@@ -1837,10 +1928,15 @@ function Connect-ToGraph {
                 $connectionResult = Connect-MgGraph -Scopes $permissionsList -NoWelcome -ErrorAction Stop
             }
             'Certificate' {
-                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId) -or
-                    [string]::IsNullOrWhiteSpace($AuthDetails.TenantId) -or
-                    [string]::IsNullOrWhiteSpace($AuthDetails.Thumbprint)) {
-                    throw "Certificate authentication requires App ID, Tenant ID, and Certificate Thumbprint"
+                # Validate certificate credentials before attempting connection
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId)) {
+                    throw "App ID is required for certificate authentication"
+                }
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.TenantId)) {
+                    throw "Tenant ID is required for certificate authentication"
+                }
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.Thumbprint)) {
+                    throw "Certificate Thumbprint is required for certificate authentication"
                 }
                 
                 # Disconnect any existing connections first
@@ -1849,10 +1945,15 @@ function Connect-ToGraph {
                 $connectionResult = Connect-MgGraph -ClientId $AuthDetails.AppId -TenantId $AuthDetails.TenantId -CertificateThumbprint $AuthDetails.Thumbprint -NoWelcome -ErrorAction Stop
             }
             'Secret' {
-                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId) -or
-                    [string]::IsNullOrWhiteSpace($AuthDetails.TenantId) -or
-                    [string]::IsNullOrWhiteSpace($AuthDetails.Secret)) {
-                    throw "Secret authentication requires App ID, Tenant ID, and Client Secret"
+                # Validate client secret credentials before attempting connection
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.AppId)) {
+                    throw "App ID is required for client secret authentication"
+                }
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.TenantId)) {
+                    throw "Tenant ID is required for client secret authentication"
+                }
+                if ([string]::IsNullOrWhiteSpace($AuthDetails.Secret)) {
+                    throw "Client Secret is required for client secret authentication"
                 }
                 
                 $SecuredPasswordPassword = ConvertTo-SecureString -String $AuthDetails.Secret -AsPlainText -Force
@@ -1927,6 +2028,9 @@ function Connect-ToGraph {
             [System.Windows.MessageBoxButton]::OK,
             [System.Windows.MessageBoxImage]::Error
         )
+        
+        # Reset UI state on connection failure
+        $script:connectionFailed = $true  # Add this flag to track connection failure
         return $false
     }
 }
@@ -2126,23 +2230,34 @@ $AuthenticateButton.Add_Click({
             }
             
             Write-Log "Authentication button clicked, showing authentication dialog..."
+            
+            # Reset the connection failed flag
+            $script:connectionFailed = $false
         
             # Show authentication dialog
             $authDetails = Show-AuthenticationDialog
             if (-not $authDetails) {
                 Write-Log "Authentication cancelled by user"
+                # Reset button state if cancelled
+                $AuthenticateButton.Content = "Connect to MS Graph"
+                $AuthenticateButton.IsEnabled = $true
                 return
             }
 
+            # Set button to "Connecting..." state
+            $AuthenticateButton.Content = "Connecting..."
+            $AuthenticateButton.IsEnabled = $false
+
             # Attempt to connect
             $connected = Connect-ToGraph -AuthDetails $authDetails
-            if ($connected) {
+            
+            # Check connection status and update UI accordingly
+            if ($connected -and -not $script:connectionFailed) {
                 Write-Log "Authentication Successful"
-                $AuthenticateButton.Content = "Authentication Successful"
+                $AuthenticateButton.Content = "Connected to MS Graph"
                 $AuthenticateButton.IsEnabled = $false
                 $Disconnect.Content = "Disconnect"
                 $Disconnect.IsEnabled = $true
-                $CheckPermissionsButton.IsEnabled = $true
 
                 # Enable navigation menus
                 $MenuDashboard.IsEnabled = $true
@@ -2153,135 +2268,50 @@ $AuthenticateButton.Add_Click({
                 Update-DashboardStatistics
             }
             else {
+                # Reset button state on failed connection
                 Write-Log "Authentication Failed"
-                $AuthenticateButton.Content = "Authentication Failed"
+                $AuthenticateButton.Content = "Connect to MS Graph"
                 $AuthenticateButton.IsEnabled = $true
                 $Disconnect.Content = "Disconnected"
                 $Disconnect.IsEnabled = $false
-                $CheckPermissionsButton.IsEnabled = $false
                 
                 # Disable navigation menus
                 $MenuDashboard.IsEnabled = $false
                 $MenuDeviceManagement.IsEnabled = $false
                 $MenuPlaybooks.IsEnabled = $false
+                
+                # Hide tenant info
+                $Window.FindName('TenantInfoSection').Visibility = 'Collapsed'
+                $Window.FindName('TenantDisplayName').Text = ""
+                $Window.FindName('TenantId').Text = ""
+                $Window.FindName('TenantDomain').Text = ""
             }
         }
         catch {
             Write-Log "Error occurred during authentication. Exception: $_"
-            $AuthenticateButton.Content = "Authentication Failed"
+            # Reset button state on error
+            $AuthenticateButton.Content = "Connect to MS Graph"
             $AuthenticateButton.IsEnabled = $true
             $Disconnect.Content = "Disconnected"
             $Disconnect.IsEnabled = $false
-            $CheckPermissionsButton.IsEnabled = $false
             
             # Disable navigation menus
             $MenuDashboard.IsEnabled = $false
             $MenuDeviceManagement.IsEnabled = $false
             $MenuPlaybooks.IsEnabled = $false
-        }
-    })
-    
-$CheckPermissionsButton.Add_Click({
-        try {
-            Write-Log "Check Permissions button clicked, attempting to retrieve user context..."
-
-            $context = Get-MGContext
-
-            if ($context) {
-                $username = $context.Account
-
-                # Check if the required scopes are present
-                $requiredScopes = @("Device.Read.All", "DeviceManagementManagedDevices.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All")
-                $missingScopes = $requiredScopes | Where-Object { $_ -notin $context.Scopes }
-
-                if ($missingScopes) {
-                    $missingScopesList = $missingScopes -join ', '
-                    $message = "WARNING: The following required permissions are missing for $username : $missingScopesList"
-                }
-                else {
-                    $message = "All required permissions are granted for $username."
-                }
-
-                [System.Windows.MessageBox]::Show($message)
-            }
-            else {
-                [System.Windows.MessageBox]::Show("No user context found. Please authenticate first.")
-            }
-        }
-        catch {
-            Write-Log "Error in retrieving user context: $_"
-            [System.Windows.MessageBox]::Show("Error in retrieving user context.")
-        }
-    })
-
-$Window.Add_Loaded({
-        try {
-            Write-Log "Window is loading..."
-      
-            $modules = @(
-                "Microsoft.Graph.Authentication"
+            
+            # Hide tenant info
+            $Window.FindName('TenantInfoSection').Visibility = 'Collapsed'
+            $Window.FindName('TenantDisplayName').Text = ""
+            $Window.FindName('TenantId').Text = ""
+            $Window.FindName('TenantDomain').Text = ""
+            
+            [System.Windows.MessageBox]::Show(
+                "Authentication failed: $_",
+                "Error",
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Error
             )
-      
-            if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
-                $InstallModulesButton.Content = "Modules Installed"
-                $InstallModulesButton.IsEnabled = $false
-                Write-Log "Modules already installed."
-            }
-        }
-        catch {
-            Write-Log "Error occurred while checking if modules are installed: $_"
-            $AuthenticateButton.Content = "Not Connected to MS Graph"
-            $AuthenticateButton.IsEnabled = $true
-        }
-    })
-    
-$InstallModulesButton.Add_Click({
-        try {
-            Write-Log "Install Modules button clicked, attempting to install modules..."
-    
-            $modules = @(
-                "Microsoft.Graph.Identity.DirectoryManagement",
-                "Microsoft.Graph.DeviceManagement",
-                "Microsoft.Graph.DeviceManagement.Enrollment"
-            )
-    
-            $InstallModulesButton.Content = "Installing..."
-            $InstallModulesButton.IsEnabled = $false
-    
-            $job = Start-Job -ScriptBlock {
-                param($modules)
-    
-                foreach ($module in $modules) {
-                    if (!(Get-Module -ListAvailable -Name $module)) {
-                        Write-Host "Installing module: $module..."
-                        Install-Module $module -Scope CurrentUser -Force -ErrorAction Stop
-                    }
-                }
-            } -ArgumentList $modules
-    
-            # Register event to capture installation completion and update GUI accordingly
-            Register-ObjectEvent -InputObject $job -EventName StateChanged -Action {
-                if ($event.SourceEventArgs.JobStateInfo.State -eq 'Completed') {
-                    if ($modules | ForEach-Object { Get-Module -ListAvailable -Name $_ }) {
-                        $InstallModulesButton.Dispatcher.Invoke({
-                                $InstallModulesButton.Content = "Modules Installed"
-                            })
-                        Write-Log "All modules installed successfully."
-                    }
-                }
-                elseif ($event.SourceEventArgs.JobStateInfo.State -eq 'Failed') {
-                    $InstallModulesButton.Dispatcher.Invoke({
-                            $InstallModulesButton.Content = "Install Modules"
-                            $InstallModulesButton.IsEnabled = $true
-                        })
-                    Write-Log "Error in installing modules. Please ensure you have administrative permissions: $_"
-                    [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
-                }
-            }
-        }
-        catch {
-            Write-Log "Exception: $_"
-            [System.Windows.MessageBox]::Show("Error in installing modules. Please ensure you have administrative permissions.")
         }
     })
     
@@ -2517,31 +2547,31 @@ function Show-PrerequisitesDialog {
     # Add required permissions with checkboxes
     $requiredPermissions = @(
         @{
-            Name = "Device.Read.All"
+            Name        = "Device.Read.All"
             Description = "Read all device properties from Entra ID"
         },
         @{
-            Name = "DeviceManagementApps.Read.All"
+            Name        = "DeviceManagementApps.Read.All"
             Description = "Read mobile app management policies and configurations"
         },
         @{
-            Name = "DeviceManagementConfiguration.Read.All"
+            Name        = "DeviceManagementConfiguration.Read.All"
             Description = "Read device configuration policies and assignments"
         },
         @{
-            Name = "DeviceManagementManagedDevices.ReadWrite.All"
+            Name        = "DeviceManagementManagedDevices.ReadWrite.All"
             Description = "Read and modify managed device information and compliance policies"
         },
         @{
-            Name = "DeviceManagementServiceConfig.ReadWrite.All"
+            Name        = "DeviceManagementServiceConfig.ReadWrite.All"
             Description = "Read and modify Autopilot deployment profiles"
         },
         @{
-            Name = "Group.Read.All"
+            Name        = "Group.Read.All"
             Description = "Read group information and memberships"
         },
         @{
-            Name = "User.Read.All"
+            Name        = "User.Read.All"
             Description = "Read user profile information and check group memberships"
         }
     )
@@ -2563,7 +2593,8 @@ function Show-PrerequisitesDialog {
             $currentPermissions -contains $permission.Name.Replace(".Read", ".ReadWrite")) {
             $checkbox.IsChecked = $true
             $checkbox.Foreground = "#28A745"
-        } else {
+        }
+        else {
             $checkbox.IsChecked = $false
             $checkbox.Foreground = "#DC3545"
         }
@@ -2638,7 +2669,8 @@ function Show-PrerequisitesDialog {
     if (Get-Module -ListAvailable -Name "Microsoft.Graph.Authentication") {
         $moduleCheckbox.IsChecked = $true
         $moduleCheckbox.Foreground = "#28A745"
-    } else {
+    }
+    else {
         $moduleCheckbox.IsChecked = $false
         $moduleCheckbox.Foreground = "#DC3545"
         $installButton.Visibility = "Visible"
@@ -2651,49 +2683,49 @@ function Show-PrerequisitesDialog {
 
     # Add install button click handler
     $installButton.Add_Click({
-        try {
-            $installButton.IsEnabled = $false
-            $installButton.Content = "Installing..."
+            try {
+                $installButton.IsEnabled = $false
+                $installButton.Content = "Installing..."
 
-            Install-Module "Microsoft.Graph.Authentication" -Scope CurrentUser -Force
+                Install-Module "Microsoft.Graph.Authentication" -Scope CurrentUser -Force
             
-            $moduleCheckbox.IsChecked = $true
-            $moduleCheckbox.Foreground = "#28A745"
-            $installButton.Visibility = "Collapsed"
+                $moduleCheckbox.IsChecked = $true
+                $moduleCheckbox.Foreground = "#28A745"
+                $installButton.Visibility = "Collapsed"
 
-            # Restart required message
-            [System.Windows.MessageBox]::Show(
-                "Module installed successfully. Please restart the application for changes to take effect.",
-                "Installation Complete",
-                [System.Windows.MessageBoxButton]::OK,
-                [System.Windows.MessageBoxImage]::Information
-            )
-        }
-        catch {
-            Write-Log "Error installing module: $_"
-            [System.Windows.MessageBox]::Show(
-                "Failed to install module. Please ensure you have internet connection and necessary permissions.",
-                "Installation Error",
-                [System.Windows.MessageBoxButton]::OK,
-                [System.Windows.MessageBoxImage]::Error
-            )
-            $installButton.IsEnabled = $true
-            $installButton.Content = "Install"
-        }
-    })
+                # Restart required message
+                [System.Windows.MessageBox]::Show(
+                    "Module installed successfully. Please restart the application for changes to take effect.",
+                    "Installation Complete",
+                    [System.Windows.MessageBoxButton]::OK,
+                    [System.Windows.MessageBoxImage]::Information
+                )
+            }
+            catch {
+                Write-Log "Error installing module: $_"
+                [System.Windows.MessageBox]::Show(
+                    "Failed to install module. Please ensure you have internet connection and necessary permissions.",
+                    "Installation Error",
+                    [System.Windows.MessageBoxButton]::OK,
+                    [System.Windows.MessageBoxImage]::Error
+                )
+                $installButton.IsEnabled = $true
+                $installButton.Content = "Install"
+            }
+        })
 
     # Add close button handler
     $closeButton.Add_Click({
-        $prereqWindow.Close()
-    })
+            $prereqWindow.Close()
+        })
 
     # Show dialog
     $prereqWindow.ShowDialog()
 }
 
 $PrerequisitesButton.Add_Click({
-    Show-PrerequisitesDialog
-})
+        Show-PrerequisitesDialog
+    })
 
 $logs_button.Add_Click({
         $logFilePath = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "IntuneOffboardingTool_Log.txt")
@@ -3022,6 +3054,135 @@ $MenuDashboard.Add_Checked({
         if (-not $AuthenticateButton.IsEnabled) {
             Update-DashboardStatistics
         }
+    })
+
+# Add changelog functionality
+function Show-ChangelogDialog {
+    try {
+        Write-Log "Opening changelog dialog..."
+        
+        $reader = (New-Object System.Xml.XmlNodeReader $changelogModalXaml)
+        $changelogWindow = [Windows.Markup.XamlReader]::Load($reader)
+        
+        # Get controls
+        $closeButton = $changelogWindow.FindName('CloseChangelogButton')
+        $contentBlock = $changelogWindow.FindName('ChangelogContent')
+        
+        # Add close button handler
+        $closeButton.Add_Click({
+                $changelogWindow.Close()
+            })
+        
+        # Fetch and display changelog content
+        try {
+            $markdownContent = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/ugurkocde/DeviceOffboardingManager/refs/heads/main/Changelog.md" -Method Get
+            
+            # Create new FlowDocument
+            $flowDoc = New-Object System.Windows.Documents.FlowDocument
+            $flowDoc.PageWidth = 700 # Set a fixed width for proper text flow
+            
+            # Process markdown content line by line
+            $markdownContent -split "`n" | ForEach-Object {
+                $line = $_.TrimEnd()
+                
+                if ($line) {
+                    $paragraph = New-Object System.Windows.Documents.Paragraph
+                    
+                    # Headers
+                    if ($line -match '^(#{1,6})\s+(.+)$') {
+                        $headerLevel = $matches[1].Length
+                        $headerText = $matches[2]
+                        $run = New-Object System.Windows.Documents.Run($headerText)
+                        $run.FontSize = (24 - ($headerLevel * 2))
+                        $run.FontWeight = 'Bold'
+                        if ($headerLevel -eq 2) {
+                            # Main version headers
+                            $run.Foreground = New-Object System.Windows.Media.SolidColorBrush([System.Windows.Media.Color]::FromRgb(0, 120, 212))
+                        }
+                        $paragraph.Inlines.Add($run)
+                        $paragraph.Margin = New-Object System.Windows.Thickness(0, 10, 0, 5)
+                    }
+                    # List items
+                    elseif ($line -match '^\s*-\s+(.+)$') {
+                        $listText = $matches[1]
+                        $bullet = New-Object System.Windows.Documents.Run('• ')
+                        $bullet.FontWeight = 'Bold'
+                        $paragraph.Inlines.Add($bullet)
+                        
+                        # Check for italic text within list item
+                        if ($listText -match '\*([^\*]+)\*') {
+                            $parts = $listText -split '(\*[^\*]+\*)'
+                            foreach ($part in $parts) {
+                                if ($part -match '^\*([^\*]+)\*$') {
+                                    $run = New-Object System.Windows.Documents.Run($matches[1])
+                                    $run.FontStyle = 'Italic'
+                                    $paragraph.Inlines.Add($run)
+                                }
+                                elseif ($part.Trim()) {
+                                    $run = New-Object System.Windows.Documents.Run($part)
+                                    $paragraph.Inlines.Add($run)
+                                }
+                            }
+                        }
+                        else {
+                            $run = New-Object System.Windows.Documents.Run($listText)
+                            $paragraph.Inlines.Add($run)
+                        }
+                        
+                        $paragraph.Margin = New-Object System.Windows.Thickness(20, 0, 0, 5)
+                    }
+                    # Italic text (not in list)
+                    elseif ($line -match '\*([^\*]+)\*') {
+                        $parts = $line -split '(\*[^\*]+\*)'
+                        foreach ($part in $parts) {
+                            if ($part -match '^\*([^\*]+)\*$') {
+                                $run = New-Object System.Windows.Documents.Run($matches[1])
+                                $run.FontStyle = 'Italic'
+                                $paragraph.Inlines.Add($run)
+                            }
+                            elseif ($part.Trim()) {
+                                $run = New-Object System.Windows.Documents.Run($part)
+                                $paragraph.Inlines.Add($run)
+                            }
+                        }
+                    }
+                    # Regular text
+                    else {
+                        $run = New-Object System.Windows.Documents.Run($line)
+                        $paragraph.Inlines.Add($run)
+                    }
+                    
+                    $flowDoc.Blocks.Add($paragraph)
+                }
+            }
+            
+            # Set the FlowDocument to the RichTextBox
+            $contentBlock.Document = $flowDoc
+            Write-Log "Successfully loaded changelog content"
+        }
+        catch {
+            Write-Log "Error fetching changelog: $_"
+            $contentBlock.Text = "Error loading changelog. Please check your internet connection and try again."
+        }
+        
+        # Show dialog
+        $changelogWindow.ShowDialog()
+    }
+    catch {
+        Write-Log "Error showing changelog dialog: $_"
+        [System.Windows.MessageBox]::Show(
+            "Error showing changelog dialog: $_",
+            "Error",
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Error
+        )
+    }
+}
+
+# Connect changelog button
+$changelog_button = $Window.FindName('changelog_button')
+$changelog_button.Add_Click({
+        Show-ChangelogDialog
     })
 
 # Show Window
