@@ -365,6 +365,23 @@ function Get-GraphPagedResults {
             </Setter>
         </Style>
 
+        <!-- Toast Notification Style -->
+        <Style x:Key="ToastNotificationStyle" TargetType="Border">
+            <Setter Property="Background" Value="#1B2A47"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="2"
+                                    Direction="315"
+                                    Color="#000000"
+                                    Opacity="0.25"
+                                    BlurRadius="4"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Secondary Button Style -->
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="40"/>
@@ -1206,11 +1223,47 @@ function Get-GraphPagedResults {
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Side -->
-                    <Button x:Name="OffboardButton" 
-                            Content="Offboard device(s)" 
-                            Background="#D83B01"
+                    <Button x:Name="OffboardButton"
+                            Content="Offboard device(s)"
                             Grid.Column="0"
-                            Margin="0,0,8,0"/>
+                            Height="40"
+                            Padding="20,0"
+                            Background="#DC2626"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Margin="0,0,8,0">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="6"/>
+                            </Style>
+                        </Button.Resources>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Margin="{TemplateBinding Padding}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#B91C1C"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="#FCA5A5"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </Grid>
             </Grid>
 
