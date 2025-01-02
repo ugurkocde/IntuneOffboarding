@@ -537,47 +537,159 @@ function Get-GraphPagedResults {
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <TextBlock Grid.Row="0"
-                          Text="Welcome to the Device Offboarding Manager"
-                          FontSize="24"
-                          FontWeight="SemiBold"
-                          Margin="0,0,0,20"/>
-
-                <!-- Content -->
-                <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                    <TextBlock Text="This tool helps you manage and offboard devices from:"
-                             FontSize="16"
-                             Margin="0,0,0,15"/>
-                    <TextBlock Text="• Microsoft Intune"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="• Windows Autopilot"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="• Microsoft Entra ID (formerly Azure AD)"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    
-                    <TextBlock Text="Getting Started:"
-                             FontSize="16"
-                             FontWeight="SemiBold"
-                             Margin="0,30,0,15"/>
-                    <TextBlock Text="1. Connect to MS Graph using the button in the sidebar"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="2. Check permissions to ensure you have the required access"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="3. Navigate to Device Management to search and manage devices"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="4. Use the Dashboard to view device statistics"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
-                    <TextBlock Text="5. Explore Playbooks for common management tasks"
-                             FontSize="14"
-                             Margin="20,0,0,10"/>
+                <StackPanel Grid.Row="0" Margin="0,0,0,30">
+                    <TextBlock Text="Device Offboarding Manager"
+                              FontSize="32"
+                              FontWeight="Bold"
+                              Margin="0,0,0,10"/>
+                    <TextBlock Text="Streamline your device lifecycle management across Microsoft services"
+                              FontSize="16"
+                              Opacity="0.7"/>
                 </StackPanel>
+
+                <!-- Main Content in 2x2 Grid -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Quick Actions -->
+                    <Border Grid.Column="0" Grid.Row="0" 
+                            Background="#1B2A47" 
+                            CornerRadius="8" 
+                            Margin="0,0,10,10">
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Quick Actions"
+                                     FontSize="20"
+                                     FontWeight="SemiBold"
+                                     Foreground="White"
+                                     Margin="0,0,0,15"/>
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="→ Connect to MS Graph in the sidebar"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="→ Check permissions after connecting"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="→ Access device management tools"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Key Features -->
+                    <Border Grid.Column="1" Grid.Row="0" 
+                            Background="#172A3A" 
+                            CornerRadius="8" 
+                            Margin="10,0,0,10">
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Key Features"
+                                     FontSize="20"
+                                     FontWeight="SemiBold"
+                                     Foreground="White"
+                                     Margin="0,0,0,15"/>
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="• Real-time device monitoring"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="• Bulk device operations"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="• Automated management tasks"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Services -->
+                    <Border Grid.Column="0" Grid.Row="1" 
+                            Background="#2D3748" 
+                            CornerRadius="8" 
+                            Margin="0,10,10,0">
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Supported Services"
+                                     FontSize="20"
+                                     FontWeight="SemiBold"
+                                     Foreground="White"
+                                     Margin="0,0,0,15"/>
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="• Intune"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="• Autopilot"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="• Entra ID"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="• Soon: Defender for Endpoint"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Navigation -->
+                    <Border Grid.Column="1" Grid.Row="1" 
+                            Background="#1A365D" 
+                            CornerRadius="8" 
+                            Margin="10,10,0,0">
+                        <Grid Margin="20">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Navigation Guide"
+                                     FontSize="20"
+                                     FontWeight="SemiBold"
+                                     Foreground="White"
+                                     Margin="0,0,0,15"/>
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="Dashboard → Device statistics"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="Device Management → Search &amp; manage"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Text="Playbooks → Automated tasks"
+                                         FontSize="14"
+                                         Foreground="#A0AEC0"
+                                         Margin="0,0,0,8"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Grid>
 
             <!-- Dashboard Page -->
