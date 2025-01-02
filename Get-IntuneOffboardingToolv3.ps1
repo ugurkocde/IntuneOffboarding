@@ -802,7 +802,7 @@ function Get-GraphPagedResults {
                                      FontWeight="Bold"
                                      Margin="0,0,0,8"/>
                             <TextBlock Grid.Row="2"
-                                     Text="Total Azure AD Devices"
+                                     Text="Total Entra ID Devices"
                                      Foreground="#718096"
                                      FontSize="12"/>
                         </Grid>
@@ -1160,6 +1160,7 @@ function Get-GraphPagedResults {
                                      Grid.Column="1"
                                      Margin="8,0,0,0"
                                      FontSize="13"
+                                     Text="Intune"
                                      Foreground="White"
                                      VerticalAlignment="Center"/>
                         </Grid>
@@ -1185,12 +1186,13 @@ function Get-GraphPagedResults {
                                      Grid.Column="1"
                                      Margin="8,0,0,0"
                                      FontSize="13"
+                                     Text="Autopilot"
                                      Foreground="White"
                                      VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
 
-                    <!-- Azure AD Status -->
+                    <!-- Entra ID Status -->
                     <Border Background="#1B2A47"
                             Margin="8,0,0,0"
                             CornerRadius="6"
@@ -1210,6 +1212,7 @@ function Get-GraphPagedResults {
                                      Grid.Column="1"
                                      Margin="8,0,0,0"
                                      FontSize="13"
+                                     Text="Entra ID"
                                      Foreground="White"
                                      VerticalAlignment="Center"/>
                         </Grid>
@@ -2525,11 +2528,11 @@ $SearchButton.Add_Click({
                 }
             }
     
-            $Window.FindName('intune_status').Text = "Intune: $IntuneCount Available"
+            $Window.FindName('intune_status').Text = "Intune: $IntuneCount device found"
             $Window.FindName('intune_status').Foreground = if ($IntuneCount -gt 0) { '#4299E1' } else { '#FC8181' }
-            $Window.FindName('autopilot_status').Text = "Autopilot: $AutopilotCount Available"
+            $Window.FindName('autopilot_status').Text = "Autopilot: $AutopilotCount device found"
             $Window.FindName('autopilot_status').Foreground = if ($AutopilotCount -gt 0) { '#48BB78' } else { '#FC8181' }
-            $Window.FindName('aad_status').Text = "Azure AD: $AADCount Available"
+            $Window.FindName('aad_status').Text = "Entra ID: $AADCount device found"
             $Window.FindName('aad_status').Foreground = if ($AADCount -gt 0) { '#ED64A6' } else { '#FC8181' }
     
             if ($searchResults.Count -gt 0) {
@@ -2616,13 +2619,13 @@ $OffboardButton.Add_Click({
                 if ($AADDevice) {
                     $uri = "https://graph.microsoft.com/v1.0/devices/$($AADDevice.id)"
                     Invoke-MgGraphRequest -Uri $uri -Method DELETE
-                    [System.Windows.MessageBox]::Show("Successfully removed device $deviceName from AzureAD.")
-                    $Window.FindName('aad_status').Text = "Azure AD: Unavailable"
+                    [System.Windows.MessageBox]::Show("Successfully removed device $deviceName from Entra ID.")
+                    $Window.FindName('aad_status').Text = "Entra ID: Unavailable"
                     $Window.FindName('aad_status').Foreground = "#FC8181"
                     Write-Log "Successfully removed device $deviceName from Entra ID."
                 }
                 else {
-                    [System.Windows.MessageBox]::Show("Device $deviceName not found in AzureAD.")
+                    [System.Windows.MessageBox]::Show("Device $deviceName not found in Entra ID.")
                 }
 
                 if ($IntuneDevice) {
