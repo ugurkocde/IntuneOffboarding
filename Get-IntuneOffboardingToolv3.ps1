@@ -2416,74 +2416,113 @@ $MenuPlaybooks.Add_Checked({
 function Update-DashboardStatistics {
     try {
         Write-Log "Updating dashboard statistics..."
-
+    
         # Get all managed devices
         $uri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices"
         $intuneDevices = Get-GraphPagedResults -Uri $uri
-
+    
         # Get all Autopilot devices
         $uri = "https://graph.microsoft.com/v1.0/deviceManagement/windowsAutopilotDeviceIdentities"
         $autopilotDevices = Get-GraphPagedResults -Uri $uri
-
+    
         # Get all EntraID devices
         $uri = "https://graph.microsoft.com/v1.0/devices"
         $entraDevices = Get-GraphPagedResults -Uri $uri
-
+    
         # Update top row counts
         $Window.FindName('IntuneDevicesCount').Text = $intuneDevices.Count
         $Window.FindName('AutopilotDevicesCount').Text = $autopilotDevices.Count
         $Window.FindName('EntraIDDevicesCount').Text = $entraDevices.Count
-
+    
         # Calculate stale devices
         $thirtyDaysAgo = (Get-Date).AddDays(-30).ToString('yyyy-MM-ddTHH:mm:ssZ')
         $ninetyDaysAgo = (Get-Date).AddDays(-90).ToString('yyyy-MM-ddTHH:mm:ssZ')
         $oneEightyDaysAgo = (Get-Date).AddDays(-180).ToString('yyyy-MM-ddTHH:mm:ssZ')
-
+    
         $stale30 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $thirtyDaysAgo }).Count
         $stale90 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $ninetyDaysAgo }).Count
         $stale180 = ($intuneDevices | Where-Object { $_.lastSyncDateTime -lt $oneEightyDaysAgo }).Count
-
+    
         $Window.FindName('StaleDevices30Count').Text = $stale30
         $Window.FindName('StaleDevices90Count').Text = $stale90
         $Window.FindName('StaleDevices180Count').Text = $stale180
-
+    
         # Update personal/corporate counts and progress bars
-        $personalDevices = ($intuneDevices | Where-Object  { $_.managedDeviceOwnerType -eq 'personal' }).Count
+        $personalDevices = ($intuneDevices | Where-Object { $_.managedDeviceOwnerType -eq 'personal' }).Count
         $corporateDevices = ($intuneDevices | Where-Object { $_.managedDeviceOwnerType -eq 'company' }).Count
         $totalDevices = if ($intuneDevices) { $intuneDevices.Count } else { 0 }
-
+    
         # Update counts
         $Window.FindName('PersonalDevicesCount').Text = $personalDevices
         $Window.FindName('CorporateDevicesCount').Text = $corporateDevices
-
+    
         # Update progress bars
         if ($totalDevices -gt 0) {
             $personalProgress = [Math]::Round(($personalDevices / $totalDevices) * 100)
             $corporateProgress = [Math]::Round(($corporateDevices / $totalDevices) * 100)
-            
+                
             $Window.FindName('PersonalDevicesProgress').Value = $personalProgress
             $Window.FindName('CorporateDevicesProgress').Value = $corporateProgress
         }
-
-        # Group platform distribution
-        $platformGroups = $intuneDevices | Group-Object -Property { 
-            if ($_.operatingSystem -like "Linux*") { "Linux" } else { $_.operatingSystem } 
+    
+        # Group platform distribution with better handling of operating systems
+        $platformGroups = $intuneDevices | Group-Object -Property {
+            $os = $_.operatingSystem
+            if ([string]::IsNullOrWhiteSpace($os)) { return "Unknown" }
+                
+            switch -Regex ($os.ToLower()) {
+                'windows' { "Windows" }
+                'macos|mac os' { "macOS" }
+                'linux' { "Linux" }
+                'ios' { "iOS" }
+                'android' { "Android" }
+                default { "Other" }
+            }
+        } | Sort-Object Count -Descending
+    
+        # Define platform colors
+        $platformColors = @{
+            'Windows' = '#0078D4'  # Microsoft Blue
+            'iOS'     = '#48BB78'  # Green
+            'Android' = '#9F7AEA'  # Purple
+            'macOS'   = '#F6AD55'  # Orange
+            'Linux'   = '#FC8181'  # Red
+            'Other'   = '#718096'  # Gray
+            'Unknown' = '#718096'  # Gray
         }
-
+    
+        # Calculate platform distribution with accurate percentages
         $platformDistribution = $platformGroups | ForEach-Object {
+            $platform = $_.Name
+            $count = $_.Count
+            $percentage = if ($totalDevices -gt 0) { [Math]::Round(($count / $totalDevices) * 100, 1) } else { 0 }
+                
             @{
-                Platform = if ([string]::IsNullOrEmpty($_.Name)) { "Unknown" } else { $_.Name }
-                Count = $_.Count
-                Percentage = if ($totalDevices -gt 0) { [Math]::Round(($_.Count / $totalDevices) * 100) } else { 0 }
+                Platform   = $platform
+                Count      = $count
+                Percentage = $percentage
+                Color      = if ($platformColors.ContainsKey($platform)) {
+                    $platformColors[$platform]
+                }
+                else {
+                    $platformColors['Unknown']
+                }
             }
         }
-
-        # Log platform distribution for visualization
+    
+        # Update platform distribution chart
+        $platformChart = $Window.FindName('PlatformDistributionChart')
+        if ($platformChart) {
+            $platformChart.ItemsSource = $null  # Clear the existing items
+            $platformChart.ItemsSource = $platformDistribution
+        }
+    
+        # Log platform distribution
         Write-Log "Platform Distribution:"
         foreach ($platform in $platformDistribution) {
             Write-Log "$($platform.Platform): $($platform.Count) devices ($($platform.Percentage)%)"
         }
-
+    
         Write-Log "Dashboard statistics updated successfully."
     }
     catch {
@@ -2491,7 +2530,6 @@ function Update-DashboardStatistics {
         [System.Windows.MessageBox]::Show("Error updating dashboard statistics. Please ensure you are connected to MS Graph.")
     }
 }
-
 # Connect playbook buttons
 $PlaybookButtons = @(
     $Window.FindName('PlaybookAutopilotNotIntune'),
