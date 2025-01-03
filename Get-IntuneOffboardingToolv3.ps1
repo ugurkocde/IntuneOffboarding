@@ -183,25 +183,42 @@ function Get-GraphPagedResults {
 
         <!-- Playbook Button Style -->
         <Style x:Key="PlaybookButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#28A745"/>
+            <Setter Property="Background" Value="#1B2A47"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="20,15"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
-                                CornerRadius="4"
-                                Padding="{TemplateBinding Padding}">
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}"
+                                Effect="{StaticResource CardShadow}">
                             <Grid>
-                                <ContentPresenter HorizontalAlignment="Left" 
-                                                VerticalAlignment="Center"/>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="{TemplateBinding Content}"
+                                         FontWeight="SemiBold"
+                                         TextWrapping="Wrap"
+                                         Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="1"
+                                         x:Name="Description"
+                                         Text="{TemplateBinding Tag}"
+                                         Foreground="#A0AEC0"
+                                         FontSize="12"
+                                         TextWrapping="Wrap"/>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#218838"/>
+                                <Setter Property="Background" Value="#2D3748"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#2D3748"/>
+                                <Setter Property="Opacity" Value="0.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -1277,52 +1294,97 @@ function Get-GraphPagedResults {
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Margin="20">
-                    <TextBlock Text="Playbooks" 
-                              FontSize="24"
-                              FontWeight="SemiBold"
-                              Foreground="#323130"
-                              Margin="0,0,0,10"/>
-                    <TextBlock Text="Select a playbook to execute and view device information."
-                              Opacity="0.7"
-                              Margin="0,0,0,20"/>
-                </StackPanel>
+                <Grid Grid.Row="0" Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Playbooks"
+                             FontSize="32"
+                             FontWeight="Bold"
+                             Foreground="#323130"
+                             Margin="0,0,0,10"/>
+                    <TextBlock Grid.Row="1"
+                             Text="Automated device management tasks and reports"
+                             FontSize="16"
+                             Opacity="0.7"/>
+                </Grid>
 
-                <ScrollViewer Grid.Row="1" 
-                             Margin="20,0,20,20" 
+                <ScrollViewer Grid.Row="1"
+                             Margin="20,0,20,20"
                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
+                    <WrapPanel>
                         <Button x:Name="PlaybookAutopilotNotIntune"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all devices that are in Autopilot but not in Intune"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Autopilot Devices Not in Intune"
+                                Tag="Identify devices registered in Autopilot but missing from Intune management"/>
                         <Button x:Name="PlaybookIntuneNotAutopilot"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all devices that are in Intune but not in Autopilot"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Intune Devices Not in Autopilot"
+                                Tag="Find managed devices that aren't registered in Autopilot"/>
                         <Button x:Name="PlaybookCorporateDevices"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all Corporate devices in Intune"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Corporate Device Inventory"
+                                Tag="View all company-owned devices managed in Intune"/>
                         <Button x:Name="PlaybookPersonalDevices"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all Personal devices in Intune"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Personal Device Inventory"
+                                Tag="List all BYOD devices enrolled in Intune"/>
                         <Button x:Name="PlaybookStaleDevices"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all Stale Devices in Intune"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Stale Device Report"
+                                Tag="Identify devices that haven't checked in recently"/>
                         <Button x:Name="PlaybookSpecificOS"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all devices with a specific OS in Intune"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="OS-Specific Device List"
+                                Tag="Filter devices by operating system version"/>
                         <Button x:Name="PlaybookNotLatestOS"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all devices that are not on the latest OS"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="Outdated OS Report"
+                                Tag="Find devices running older operating system versions"/>
                         <Button x:Name="PlaybookEOLOS"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all devices in Intune with a End-of-life OS Version"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="End-of-Life OS Report"
+                                Tag="Identify devices running unsupported OS versions"/>
                         <Button x:Name="PlaybookBitLocker"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all Windows Devices and BitLocker Keys"/>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="BitLocker Key Report"
+                                Tag="View BitLocker recovery keys for Windows devices"/>
                         <Button x:Name="PlaybookFileVault"
                                 Style="{StaticResource PlaybookButtonStyle}"
-                                Content="List all macOS Devices and FileVault Keys"/>
-                    </StackPanel>
+                                Width="380"
+                                Height="120"
+                                Margin="0,0,15,15"
+                                Content="FileVault Key Report"
+                                Tag="View FileVault recovery keys for macOS devices"/>
+                    </WrapPanel>
                 </ScrollViewer>
 
                 <!-- Playbook Results -->
