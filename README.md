@@ -1,5 +1,7 @@
 # Intune Offboarding Tool
 
+NEW VERSION: https://github.com/ugurkocde/DeviceOffboardingManager
+
 <div align="center">
   <p>
     <a href="https://twitter.com/UgurKocDe">
